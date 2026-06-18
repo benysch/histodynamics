@@ -44,6 +44,7 @@ sys.path.insert(0, str(ROOT / "pipeline"))
 CLIO = ROOT / "data" / "raw" / "cliopatria_polities_only.geojson"
 POP_SHARES = ROOT / "data" / "processed" / "population_shares.csv"
 GDP_CSV = ROOT / "data" / "processed" / "gdp_intusd.csv"   # optional (pipeline/compute_gdp.py)
+VEC_DIR = ROOT / "data" / "processed" / "vectors"          # optional extra dimensions (one CSV per fact)
 DATA_JS = ROOT / "web" / "data.js"
 FP_JSON = ROOT / "data" / "raw" / "wikidata_fingerprint.json"
 WEB = ROOT / "web"
@@ -237,6 +238,44 @@ def main():
     else:
         print("GDP: gdp_intusd.csv absent — economy lens stays disabled")
 
+    # --- dynamic vectors: data/processed/vectors/*.csv -> extra extensive facts ---
+    # Each CSV is (polity_id, year, <value>); the value column NAMES the fact
+    # written into web/facts.js (e.g. urban_pop, cultural_figures), so adding a
+    # dimension is adding a file here — no code change downstream. Aggregated to
+    # streams with the same name_to_stream mapping GDP uses; the per-slice world
+    # total is all attributed value, so unattributed value is an honest residual.
+    # Placed AFTER name_to_stream is fully populated and BEFORE the FACTS emit.
+    vectors = {}       # fact_key -> {year -> {stream -> value}}
+    vec_world = {}     # fact_key -> {year -> total}
+    if VEC_DIR.exists():
+        for csv_path in sorted(VEC_DIR.glob("*.csv")):
+            vdf = pd.read_csv(csv_path)
+            value_cols = [c for c in vdf.columns if c not in ("polity_id", "year")]
+            if not value_cols:
+                print(f"vectors: {csv_path.name} has no value column — skipped")
+                continue
+            key = value_cols[0]
+            vectors[key] = {y: {} for y in years}
+            vec_world[key] = {y: 0.0 for y in years}
+            placed = 0
+            for r in vdf.itertuples(index=False):
+                y = int(r.year)
+                if y not in vectors[key]:
+                    continue
+                val = getattr(r, key)
+                if pd.isna(val):
+                    continue
+                val = float(val)
+                vec_world[key][y] += val
+                stream = name_to_stream.get(r.polity_id)
+                if stream is not None:
+                    vectors[key][y][stream] = vectors[key][y].get(stream, 0.0) + val
+                    placed += 1
+            print(f"vectors: {csv_path.name} -> fact '{key}' "
+                  f"({placed:,} stream-years attributed)")
+    else:
+        print("vectors: data/processed/vectors/ absent — no extra dimensions")
+
     # --- emit web/polities.js ---
     polities = [{"id": s, "name": s, "civ": regions.get(s, "unknown")} for s in streams]
     emit_js("POLITIES", polities, WEB / "polities.js")
@@ -254,6 +293,9 @@ def main():
                 entry["area_km2"] = round(area[y][s], 3)
             if s in gdp[y]:
                 entry["gdp_int_usd"] = round(gdp[y][s], 1)
+            for key, vy in vectors.items():
+                if s in vy[y]:
+                    entry[key] = round(vy[y][s], 3)
             if entry:
                 slot[s] = entry
         facts[str(y)] = slot
@@ -274,6 +316,9 @@ def main():
         t = {"population": world_pop, "area_km2": max(WORLD_LAND_KM2, mapped)}
         if gdp_world[y] > 0:
             t["gdp"] = gdp_world[y]
+        for key, wy in vec_world.items():
+            if wy[y] > 0:
+                t[key] = wy[y]
         totals[str(y)] = t
     emit_js("TOTALS", totals, WEB / "totals.js")
 

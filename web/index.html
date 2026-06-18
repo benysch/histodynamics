@@ -974,6 +974,14 @@ function lensTipBody(key, yr, s, yearTxt) {
     return `${yearTxt}: ${pct} of mapped land` +
       (f.area_km2 != null ? `<br>(~${fmtSI(f.area_km2)} km²)` : "");
   }
+  if (lensId === "urban") {
+    return `${yearTxt}: ${pct} of world urban population` +
+      (f.urban_pop != null ? `<br>(~${fmtSI(f.urban_pop)} urban people)` : "");
+  }
+  if (lensId === "culture") {
+    return `${yearTxt}: ${pct} of translated historical figures` +
+      (f.cultural_figures != null ? `<br>(~${Math.round(f.cultural_figures)} figures)` : "");
+  }
   if (lensId === "gdp") {
     let out = `${yearTxt}: ${pct} of world GDP` +
       (f.gdp_int_usd != null ? `<br>(~int$${fmtSI(f.gdp_int_usd)})` : "");

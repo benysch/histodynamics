@@ -31,6 +31,30 @@
     extract: function (f) { return f && f.gdp_int_usd != null ? f.gdp_int_usd : null; }
   };
 
+  // Structural complexity: urban population as a share of world urban
+  // population. Urbanization is a proxy for institutional maturity and the shift
+  // from agrarian subsistence toward dense, specialized economic hubs. The raw
+  // fact (urban persons) is massified upstream from an intensive rate — see
+  // pipeline/compute_complexity.py. Data-gated: hidden until urban_pop is emitted.
+  var URBANIZATION = {
+    kind: "simple", id: "urban", label: "Structural complexity",
+    description: "Share of world urban population — a proxy for institutional " +
+                 "maturity and structural complexity (Clio Infra urbanization).",
+    unit: "urban persons", totalKey: "urban_pop",
+    extract: function (f) { return f && f.urban_pop != null ? f.urban_pop : null; }
+  };
+
+  // Cultural centrality: share of globally-translated historical figures born in
+  // a polity's territory — soft power measured by cross-border reach, not by
+  // taste. See pipeline/compute_culture.py. Data-gated like the lens above.
+  var CULTURE = {
+    kind: "simple", id: "culture", label: "Cultural centrality",
+    description: "Share of globally-translated historical figures born here " +
+                 "(MIT Pantheon) — soft power by cross-border network reach.",
+    unit: "figures", totalKey: "cultural_figures",
+    extract: function (f) { return f && f.cultural_figures != null ? f.cultural_figures : null; }
+  };
+
   // Composite: weighted blend of the three components' within-slice shares.
   // No `unit` => share-only; absolute mode disabled (spec §5).
   // engine.js iterates `components` generically, so adding GDP needs no engine change.
@@ -58,7 +82,7 @@
     }
   };
 
-  var LENSES = [POPULATION, TERRITORY, GDP, RELATIVE_POWER];
+  var LENSES = [POPULATION, TERRITORY, GDP, URBANIZATION, CULTURE, RELATIVE_POWER];
   var LENS_BY_ID = {};
   LENSES.forEach(function (l) { LENS_BY_ID[l.id] = l; });
 

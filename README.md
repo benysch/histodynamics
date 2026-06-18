@@ -41,11 +41,41 @@ palettes, annotations, export — is derived from data, in the Demograph spirit.
 | **Population share** | share of world population under each polity | the Demograph metric |
 | **Territory share** | share of mapped land area | free from polygon area at rasterization |
 | **Economic share** | share of world GDP (Maddison) | low confidence before ~1500; degrades toward population there |
-| **Relative power** | weighted blend of the three above, **your weights** | presets: Demographic · Balanced · Sparks-led · Economic |
+| **Relative power** | weighted blend of population/territory/economy, **your weights** | presets: Demographic · Balanced · Sparks-led · Economic |
+| **Structural complexity** † | share of world urban population | urbanization as a proxy for institutional maturity (Clio Infra) |
+| **Cultural centrality** † | share of globally-translated historical figures born here | soft power by cross-border reach, not taste (MIT Pantheon) |
+
+† **Data-gated.** These two lenses ship in `lenses.js` and light up automatically
+once their raw facts are present; until then the UI shows them disabled. They are
+*intensive* sources (a rate; lat/lon points) **massified** into extensive facts
+before entering the pipeline — see *Adding a dimension* below. They are deliberately
+**not** folded into the Relative-power composite yet: that lens stays three-way so
+its ternary "who leads" sensitivity diagram keeps its three vertices.
 
 The composite iterates its components generically, so adding a metric (military
 spend, …) is a new lens in `lenses.js` with **no engine change** — see the
 design doc.
+
+### Adding a dimension
+
+The engine works strictly on **extensive** (additive) facts — total persons, km²,
+int\$. A source that is *intensive* (a percentage) or non-polygonal (lat/lon
+points) is first converted to an extensive mass, then dropped into the pipeline as
+one CSV:
+
+- **Massify** the source into `data/processed/vectors/<fact>.csv`
+  (`polity_id, year, <fact>`). Urbanization % → urban persons:
+  [`pipeline/compute_complexity.py`](pipeline/compute_complexity.py). Figure
+  birthplaces → per-polity counts via a spatial join:
+  [`pipeline/compute_culture.py`](pipeline/compute_culture.py).
+- `pipeline/align_territory.py` **scans** that folder and attaches every vector to
+  `web/facts.js` (with a world total in `web/totals.js`) — *no code change to add a
+  file*.
+- Add a `SimpleLens` in `web/lenses.js` whose `totalKey`/`extract` name that fact.
+
+Raw inputs (Clio Infra urbanization, MIT Pantheon, Cliopatria polygons) are
+**not committed**; stage them under `data/raw/` — see
+[`data/raw/README.md`](data/raw/README.md).
 
 ## Architecture
 
