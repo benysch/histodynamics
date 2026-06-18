@@ -34,17 +34,18 @@ Polimetric takes the opposite tack on the same critique. Instead of banishing
 Everything downstream of the metric — civilizational color, region focus,
 palettes, annotations, export — is derived from data, in the Demograph spirit.
 
-## Lenses (v1)
+## Lenses
 
 | Lens | Width = | Notes |
 |------|---------|-------|
 | **Population share** | share of world population under each polity | the Demograph metric |
 | **Territory share** | share of mapped land area | free from polygon area at rasterization |
-| **Relative power** | weighted blend of the above, **your weights** | presets: Demographic · Balanced · Sparks-ish |
+| **Economic share** | share of world GDP (Maddison) | low confidence before ~1500; degrades toward population there |
+| **Relative power** | weighted blend of the three above, **your weights** | presets: Demographic · Balanced · Sparks-led · Economic |
 
-All three run off data the pipeline already produces — no new sources needed to
-ship v1. GDP and military lenses slot into the same composite without engine
-changes (see the design doc).
+The composite iterates its components generically, so adding a metric (military
+spend, …) is a new lens in `lenses.js` with **no engine change** — see the
+design doc.
 
 ## Architecture
 
@@ -66,21 +67,31 @@ The visualization is a single static page — clone and open
 [`web/index.html`](web/index.html), or visit the live demo. No bundler, no
 server.
 
+> **Heads-up:** the page currently loads [`web/sample-data.js`](web/sample-data.js)
+> — illustrative numbers, *not* the historical dataset — so it's live and
+> explorable before the pipeline output lands. A banner says so. Swap that one
+> `<script>` for the emitted `polities.js` / `facts.js` / `totals.js` /
+> `orders.js` and nothing else in `index.html` changes.
+
 ## Rebuild the data
+
+The pipeline emits **raw facts**, not pre-baked shares — the frontend turns them
+into whichever lens is selected.
 
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r requirements.txt        # Windows: .venv\Scripts\pip
 
-python pipeline/download_hyde.py                  # population grids (range-fetched)
-# place Cliopatria & Natural Earth in data/raw/ (see NOTICE)
-python pipeline/compute_shares.py                 # population per polity per slice
-python pipeline/compute_area.py                   # territory per polity per slice
+# 1. Foundation, imported from Demograph (CC0 — see NOTICE; not vendored here yet):
+#    download_hyde.py + compute_shares.py  -> population (persons) per polity per slice.
+#    Place Cliopatria & Natural Earth in data/raw/ first.
+
+# 2. This repo's metric-layer pipeline:
+python pipeline/compute_area.py                   # territory (km²) per polity per slice
+python pipeline/compute_gdp.py                    # GDP (Maddison) per polity per slice
+python pipeline/compute_orders.py                 # baked per-lens stacking orders -> web/orders.js
 python pipeline/emit_facts.py                     # -> web/facts.js, web/totals.js, web/polities.js
 ```
-
-The pipeline emits **raw facts**, not pre-baked shares — the frontend turns them
-into whichever lens is selected.
 
 ## Data & credits
 

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polimetric — a histomap you can re-measure</title>
+<meta name="description" content="Four thousand years of world history as one stream graph — switch the metric that sets each stream's width: population, territory, economy, or a relative-power lens you weight yourself." />
+
+<!--
+  Standalone, no-build page. It loads the REAL metric layer (lenses.js,
+  engine.js, order.js, lens-adapter.js) and drives it with whatever data
+  globals are present. Right now that's sample-data.js (illustrative); swap in
+  the pipeline's polities.js / facts.js / totals.js / orders.js and this page is
+  unchanged. The stream renderer below is a lightweight stand-in for Demograph's
+  D3 renderer (see docs/INTEGRATION.md for wiring into the real one).
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:   #ECE7DA;
+    --paper-2: #E2DCCC;
+    --ink:     #1B2530;
+    --ink-2:   #33414F;
+    --line:    #C9C0AC;
+    --muted:   #6E6552;
+    --brass:   #B5762E;   /* population pole */
+    --teal:    #2E7D74;   /* territory pole  */
+    --plum:    #7A4E8C;   /* economy pole    */
+    --display: 'Space Grotesk', system-ui, sans-serif;
+    --mono:    'Space Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--display); -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  a { color: var(--brass); }
+
+  .banner {
+    background: #4A3A1E; color: #F4E9CF; font-family: var(--mono);
+    font-size: 12px; text-align: center; padding: 7px 12px; letter-spacing: .02em;
+  }
+  .banner[hidden] { display: none; }
+
+  header.top { padding: clamp(20px,4vw,40px) clamp(20px,5vw,56px) 0; }
+  .eyebrow { font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 6px; }
+  h1 { font-size: clamp(24px,4vw,38px); font-weight: 700; letter-spacing: -.02em; margin: 0 0 8px; }
+  .lede { max-width: 60ch; color: var(--ink-2); font-size: 15px; line-height: 1.55; margin: 0; }
+
+  .layout {
+    display: grid; gap: clamp(20px,3vw,36px);
+    grid-template-columns: minmax(260px, 320px) 1fr;
+    align-items: start; padding: clamp(20px,4vw,40px) clamp(20px,5vw,56px) 56px;
+  }
+  @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+
+  /* ---- control panel ---- */
+  .panel { background: var(--paper-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .sb-label { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 9px; }
+  .sb-sec + .sb-sec { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+
+  .seg { display: flex; flex-direction: column; gap: 6px; }
+  .opt {
+    appearance: none; text-align: left; cursor: pointer; background: var(--paper);
+    border: 1px solid var(--line); color: var(--ink); font-family: var(--display);
+    font-size: 14px; padding: 10px 13px; border-radius: 9px; transition: border-color .15s, box-shadow .15s;
+  }
+  .opt .sub { display: block; font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .opt:hover { border-color: var(--brass); }
+  .opt.active { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); }
+  .opt:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .comp[hidden] { display: none; }
+  .comp .hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 0 12px; }
+  .weight { margin: 0 0 12px; }
+  .weight .row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .weight .row .val { font-family: var(--mono); }
+  .weight input[type=range] { width: 100%; accent-color: var(--brass); cursor: ew-resize; }
+  .weight.pop .name  { color: var(--brass); font-weight: 600; }
+  .weight.area .name { color: var(--teal);  font-weight: 600; }
+  .weight.gdp .name  { color: var(--plum);  font-weight: 600; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .chip {
+    appearance: none; cursor: pointer; font-family: var(--mono); font-size: 11px;
+    background: transparent; color: var(--muted); border: 1px solid var(--line);
+    border-radius: 999px; padding: 5px 10px; transition: color .15s, border-color .15s, background .15s;
+  }
+  .chip:hover { color: var(--ink); border-color: var(--brass); }
+  .chip.active { background: var(--brass); color: var(--paper); border-color: var(--brass); }
+
+  .toggle { display: flex; gap: 6px; }
+  .toggle .opt { flex: 1; text-align: center; }
+  .toggle .opt.disabled { opacity: .4; pointer-events: none; }
+  .note { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin: 8px 0 0; min-height: 1em; }
+
+  /* ---- chart ---- */
+  .stage { background: var(--paper-2); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px 22px; }
+  .stage-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+  .stage-head h2 { font-size: 16px; font-weight: 600; margin: 0; }
+  .residual-readout { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .residual-readout b { color: var(--ink-2); }
+  svg { display: block; width: 100%; height: auto; }
+  .axis text { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+  .axis line { stroke: var(--line); }
+  .layer { transition: opacity .15s; cursor: default; }
+  .layer:hover { opacity: .85; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 14px; font-size: 12px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="banner" id="sampleBanner">
+  ⚠ Showing illustrative <b>sample data</b> — not the historical dataset. Swap sample-data.js for the pipeline's facts/totals/polities/orders to make it real.
+</div>
+
+<header class="top">
+  <p class="eyebrow">Polimetric</p>
+  <h1>A histomap you can re-measure</h1>
+  <p class="lede">
+    World history as one vertical stream graph — but the <em>metric</em> setting
+    each stream's width is yours to switch. Population, territory, economy, or a
+    <strong>relative-power</strong> lens whose weights you set, watching the whole
+    chart re-rank as you drag.
+  </p>
+</header>
+
+<div class="layout">
+  <!-- ================= CONTROLS ================= -->
+  <aside class="panel" aria-label="Metric controls">
+    <div class="sb-sec">
+      <p class="sb-label">Measure by</p>
+      <div class="seg" id="lensSeg" role="radiogroup" aria-label="Metric lens"></div>
+    </div>
+
+    <div class="sb-sec comp" id="comp" hidden>
+      <p class="sb-label">Define relative power</p>
+      <p class="hint">Sparks left this metric undefined. Here you set it — drag the weights and the chart re-ranks.</p>
+      <div id="weights"></div>
+      <div class="chips" id="presets"></div>
+    </div>
+
+    <div class="sb-sec">
+      <p class="sb-label">Width shows</p>
+      <div class="toggle">
+        <div class="opt active" id="wShare" role="button" tabindex="0">Share</div>
+        <div class="opt" id="wAbs" role="button" tabindex="0">Absolute</div>
+      </div>
+      <p class="note" id="widthWhy"></p>
+    </div>
+  </aside>
+
+  <!-- ================= CHART ================= -->
+  <section class="stage" aria-label="Stream graph">
+    <div class="stage-head">
+      <h2 id="chartTitle">Population share</h2>
+      <div class="residual-readout" id="residual"></div>
+    </div>
+    <svg id="chart" viewBox="0 0 900 420" preserveAspectRatio="xMidYMid meet" role="img"></svg>
+    <div class="legend" id="legend"></div>
+  </section>
+</div>
+
+<!-- real metric layer (load order per docs/INTEGRATION.md) -->
+<script src="sample-data.js"></script>
+<script src="lenses.js"></script>
+<script src="engine.js"></script>
+<script src="order.js"></script>
+<script src="lens-adapter.js"></script>
+
+<!-- page glue: controls + a compact stand-in stream renderer -->
+<script>
+(function () {
+  "use strict";
+
+  var CIV_COLORS = {
+    eastasia: "#C24A3F", southasia: "#4F9E54", europe: "#3E6FB0",
+    steppe:   "#8A93A0", mideast:   "#D08A33", americas: "#7A4E8C"
+  };
+  function colorFor(civ) { return CIV_COLORS[civ] || "#999"; }
+
+  if (!window.SAMPLE_DATA) document.getElementById("sampleBanner").hidden = true;
+
+  var LENSES = window.LENSES, LENS_BY_ID = window.LENS_BY_ID;
+  var WEIGHT_COLORS = { wPop: "pop", wArea: "area", wGdp: "gdp" };
+
+  // ---- state ----
+  var state = { lensId: "pop", params: {}, widthMode: "share" };
+
+  // ---- lens selector ----
+  var seg = document.getElementById("lensSeg");
+  LENSES.forEach(function (lens) {
+    var o = document.createElement("div");
+    o.className = "opt"; o.dataset.id = lens.id;
+    o.setAttribute("role", "radio"); o.tabIndex = 0;
+    o.innerHTML = lens.label + '<span class="sub">' + shortDesc(lens) + '</span>';
+    o.addEventListener("click", function () { selectLens(lens.id); });
+    o.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectLens(lens.id); }
+    });
+    seg.appendChild(o);
+  });
+  function shortDesc(lens) {
+    return ({ pop: "share of world population", area: "share of mapped land",
+              gdp: "share of world GDP", power: "weighted blend — you define it" })[lens.id] || "";
+  }
+
+  // ---- composite weights + presets ----
+  var comp = document.getElementById("comp");
+  var weightsWrap = document.getElementById("weights");
+  var presetsWrap = document.getElementById("presets");
+  var powerLens = LENS_BY_ID.power;
+  var sliders = {};
+
+  (powerLens.params || []).forEach(function (spec) {
+    var box = document.createElement("div");
+    box.className = "weight " + (WEIGHT_COLORS[spec.key] || "");
+    var row = document.createElement("div"); row.className = "row";
+    var name = document.createElement("span"); name.className = "name"; name.textContent = spec.label;
+    var val = document.createElement("span"); val.className = "val";
+    row.appendChild(name); row.appendChild(val);
+    var input = document.createElement("input");
+    input.type = "range"; input.min = spec.min; input.max = spec.max;
+    input.step = spec.step; input.value = spec.default;
+    input.setAttribute("aria-label", spec.label + " weight");
+    input.addEventListener("input", function () { onWeight(); });
+    box.appendChild(row); box.appendChild(input);
+    weightsWrap.appendChild(box);
+    sliders[spec.key] = { input: input, val: val };
+    state.params[spec.key] = spec.default;
+  });
+
+  Object.keys(powerLens.presets).forEach(function (label) {
+    var c = document.createElement("button");
+    c.className = "chip"; c.type = "button"; c.textContent = label;
+    c.addEventListener("click", function () { applyPreset(label); });
+    presetsWrap.appendChild(c);
+  });
+
+  function onWeight() {
+    Object.keys(sliders).forEach(function (k) { state.params[k] = +sliders[k].input.value; });
+    syncWeightLabels(); markPresetMatch(); scheduleRender();
+  }
+  function applyPreset(label) {
+    var p = powerLens.presets[label];
+    Object.keys(sliders).forEach(function (k) {
+      if (p[k] != null) { sliders[k].input.value = p[k]; state.params[k] = p[k]; }
+    });
+    syncWeightLabels(); markPresetMatch(); scheduleRender();
+  }
+  function syncWeightLabels() {
+    var total = Object.keys(sliders).reduce(function (a, k) { return a + state.params[k]; }, 0) || 1;
+    Object.keys(sliders).forEach(function (k) {
+      sliders[k].val.textContent = Math.round(state.params[k] / total * 100) + "%";
+    });
+  }
+  function markPresetMatch() {
+    Array.prototype.forEach.call(presetsWrap.children, function (c) {
+      var p = powerLens.presets[c.textContent];
+      var match = Object.keys(sliders).every(function (k) {
+        return Math.abs((p[k] || 0) - state.params[k]) < 1e-9;
+      });
+      c.classList.toggle("active", match);
+    });
+  }
+
+  // ---- width mode ----
+  var wShare = document.getElementById("wShare"), wAbs = document.getElementById("wAbs");
+  var widthWhy = document.getElementById("widthWhy");
+  wShare.addEventListener("click", function () { setWidth("share"); });
+  wAbs.addEventListener("click", function () { setWidth("absolute"); });
+  function setWidth(mode) {
+    if (mode === "absolute" && wAbs.classList.contains("disabled")) return;
+    state.widthMode = mode;
+    wShare.classList.toggle("active", mode === "share");
+    wAbs.classList.toggle("active", mode === "absolute");
+    updateWhy(); scheduleRender();
+  }
+  function updateWhy() {
+    var composite = LENS_BY_ID[state.lensId].kind === "composite";
+    widthWhy.textContent = composite
+      ? "Absolute needs one unit — a blend of shares has none."
+      : (state.widthMode === "absolute"
+          ? "Columns scale with the raw total."
+          : "Each column normalized to its slice; the gray band is unmapped.");
+  }
+
+  // ---- select ----
+  function selectLens(id) {
+    state.lensId = id;
+    Array.prototype.forEach.call(seg.children, function (o) {
+      o.classList.toggle("active", o.dataset.id === id);
+      o.setAttribute("aria-checked", o.dataset.id === id ? "true" : "false");
+    });
+    var composite = LENS_BY_ID[id].kind === "composite";
+    comp.hidden = !composite;
+    wAbs.classList.toggle("disabled", composite);
+    if (composite && state.widthMode === "absolute") setWidth("share");
+    document.getElementById("chartTitle").textContent = LENS_BY_ID[id].label;
+    updateWhy(); scheduleRender();
+  }
+
+  // ---- debounced render ----
+  var raf = null;
+  function scheduleRender() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(function () { raf = null; render(); });
+  }
+
+  // ---- compact stream renderer (stand-in for Demograph's D3 draw) ----
+  var W = 900, H = 420, M = { t: 14, r: 14, b: 26, l: 44 };
+  var svg = document.getElementById("chart");
+
+  function render() {
+    var series = window.buildSeries(state.lensId, state.params, { widthMode: state.widthMode });
+    var years = series.years, layers = series.layers, residual = series.residual;
+    var n = years.length;
+    if (!n || !layers.length) { svg.innerHTML = ""; return; }
+
+    // y domain: share mode → [0,1]; absolute → max stacked column
+    var maxStack = 1;
+    if (series.mode === "absolute") {
+      maxStack = 0;
+      for (var i = 0; i < n; i++) {
+        var s = residual[i] || 0;
+        layers.forEach(function (L) { s += L.values[i] || 0; });
+        if (s > maxStack) maxStack = s;
+      }
+      maxStack = maxStack || 1;
+    }
+
+    var plotW = W - M.l - M.r, plotH = H - M.t - M.b;
+    function x(i) { return M.l + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW); }
+    function y(v) { return M.t + plotH * (1 - v / maxStack); }
+
+    var parts = [];
+
+    // axes
+    parts.push('<g class="axis">');
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) {
+      var yy = M.t + plotH * (1 - f);
+      parts.push('<line x1="' + M.l + '" y1="' + yy + '" x2="' + (W - M.r) + '" y2="' + yy + '"/>');
+      var lab = series.mode === "absolute" ? (f * maxStack).toFixed(2) : Math.round(f * 100) + "%";
+      parts.push('<text x="' + (M.l - 6) + '" y="' + (yy + 3) + '" text-anchor="end">' + lab + '</text>');
+    });
+    years.forEach(function (yr, i) {
+      parts.push('<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + fmtYear(yr) + '</text>');
+    });
+    parts.push('</g>');
+
+    // stacked areas (bottom→top)
+    var base = new Array(n).fill(0);
+    layers.forEach(function (L) {
+      var top = base.map(function (b, i) { return b + (L.values[i] || 0); });
+      parts.push(
+        '<path class="layer" fill="' + colorFor(L.civ) + '" fill-opacity="0.92" ' +
+        'stroke="' + colorFor(L.civ) + '" stroke-opacity="0.5" stroke-width="0.5" ' +
+        'd="' + areaPath(base, top, x, y) + '"><title>' + esc(L.name) + '</title></path>'
+      );
+      base = top;
+    });
+
+    // residual band (simple lenses only)
+    if (series.mode === "share" && LENS_BY_ID[state.lensId].kind !== "composite") {
+      var top2 = base.map(function (b, i) { return b + (residual[i] || 0); });
+      parts.push('<path class="layer" fill="#B9AE96" fill-opacity="0.45" d="' +
+        areaPath(base, top2, x, y) + '"><title>unmapped</title></path>');
+    }
+
+    svg.innerHTML = parts.join("");
+    renderLegend(layers);
+    renderResidual(series);
+  }
+
+  function areaPath(bottom, top, x, y) {
+    var d = "M" + x(0) + " " + y(top[0]);
+    for (var i = 1; i < top.length; i++) d += " L" + x(i) + " " + y(top[i]);
+    for (var j = bottom.length - 1; j >= 0; j--) d += " L" + x(j) + " " + y(bottom[j]);
+    return d + " Z";
+  }
+
+  function renderLegend(layers) {
+    var seen = {}, items = [];
+    layers.forEach(function (L) {
+      if (seen[L.id]) return; seen[L.id] = true;
+      items.push('<span class="item"><span class="swatch" style="background:' +
+        colorFor(L.civ) + '"></span>' + esc(L.name) + '</span>');
+    });
+    document.getElementById("legend").innerHTML = items.join("");
+  }
+
+  function renderResidual(series) {
+    var el = document.getElementById("residual");
+    var avg = series.residual.reduce(function (a, b) { return a + b; }, 0) /
+              (series.residual.length || 1);
+    if (LENS_BY_ID[state.lensId].kind === "composite") {
+      el.innerHTML = 'unmapped diagnostic <b>~' + (avg * 100).toFixed(0) + '%</b>';
+    } else if (series.mode === "absolute") {
+      el.innerHTML = '';
+    } else {
+      el.innerHTML = 'gray band = unmapped <b>~' + (avg * 100).toFixed(0) + '%</b> of world';
+    }
+  }
+
+  function fmtYear(y) { return y < 0 ? (-y) + " BCE" : (y <= 1 ? "1 CE" : y + ""); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) {
+    return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
+
+  // ---- init ----
+  syncWeightLabels(); markPresetMatch();
+  selectLens("pop");
+})();
+</script>
+</body>
+</html>
