@@ -15,14 +15,24 @@ Method:
   2. Inner spatial join (within) figures -> polygons.
   3. Keep rows where the figure's birth_year is inside the polygon's
      [FromYear, ToYear] interval (a polygon is one historical interval).
-  4. Snap each figure's birth_year to the histomap slice it falls in, then count
-     figures per (polity, slice). This is a birth-FLOW proxy for cultural
-     centrality; a cumulative-stock variant is a future refinement.
+  4. Snap each figure's birth_year to the histomap slice it falls in.
+  5. Aggregate per (polity, slice), in one of two models (--mode):
+       stock (default) — cumulative. A figure adds to its polity's count from its
+            birth slice onward, for every slice the polity is active (union of its
+            polygon intervals, so gaps in existence are respected). Models soft
+            power as ACCUMULATED cultural capital — Athens in 400 BCE reflects a
+            century of prior figures, not just those born in that 50-year slice.
+       flow — a one-slice birth pulse: each figure counts only in its birth slice.
+            Sparser and spikier; kept for comparison.
 
 "Cultural centrality" measures soft power without subjective ranking: whose ideas
 and leaders crossed enough borders to be translated into 25+ languages, and where
 they were born. The engine then normalizes the counts into a share like any other
 extensive fact.
+
+Caveat: a polity's cultural legacy does not transfer to successor states here —
+stock lives only within the polity's own active window. Cross-polity inheritance
+(territorial succession) is a deliberately harder problem left for later.
 
 OUTPUT:
   data/processed/vectors/culture.csv  -> polity_id, year, cultural_figures
@@ -69,12 +79,48 @@ def _snap(birth_year: int, slices: list) -> int:
     return lo
 
 
+def _active_slices(intervals, slices: list) -> list:
+    """Slice years covered by ANY of a polity's [FromYear, ToYear] intervals, so
+    a polity that existed, lapsed, and revived doesn't carry stock through the gap."""
+    active = set()
+    for r in intervals.itertuples(index=False):
+        active.update(y for y in slices if r.FromYear <= y <= r.ToYear)
+    return sorted(active)
+
+
+def build_vector(flow, intervals, slices: list, mode: str):
+    """Turn the birth-flow (Name, slice_year, born) into the per-(polity, year)
+    cultural_figures vector. `intervals` is (Name, FromYear, ToYear)."""
+    if mode == "flow":
+        out = flow.rename(columns={"Name": "polity_id", "slice_year": "year",
+                                   "born": "cultural_figures"})
+    else:
+        # cumulative STOCK: carry every figure forward across the slices its
+        # polity is active. Active window = union of that polity's polygon
+        # intervals (so stock persists through quiet slices but not through gaps
+        # in existence).
+        rows = []
+        for name, g in flow.groupby("Name"):
+            born_at = dict(zip(g["slice_year"], g["born"]))
+            born_slices = sorted(born_at)
+            for s in _active_slices(intervals[intervals["Name"] == name], slices):
+                cum = sum(born_at[b] for b in born_slices if b <= s)
+                if cum > 0:
+                    rows.append((name, s, cum))
+        out = pd.DataFrame(rows, columns=["polity_id", "year", "cultural_figures"])
+
+    return (out[["polity_id", "year", "cultural_figures"]]
+            .sort_values(["polity_id", "year"]).reset_index(drop=True))
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--polygons", default=str(ROOT / "data/raw/cliopatria_polities_only.geojson"))
     ap.add_argument("--pantheon", default=str(ROOT / "data/raw/pantheon_1.csv"))
     ap.add_argument("--slices-from", default=str(ROOT / "data/processed/population_shares.csv"))
     ap.add_argument("--out", default=str(ROOT / "data/processed/vectors/culture.csv"))
+    ap.add_argument("--mode", choices=["stock", "flow"], default="stock",
+                    help="stock: cumulative cultural capital (default); flow: birth-slice pulse")
     args = ap.parse_args()
 
     poly_path, pan_path = Path(args.polygons), Path(args.pantheon)
@@ -101,15 +147,16 @@ def main() -> None:
     slices = _slice_years(Path(args.slices_from))
     joined["slice_year"] = joined[byr].astype(int).map(lambda b: _snap(b, slices))
 
-    out = (joined.groupby(["Name", "slice_year"]).size()
-                 .reset_index(name="cultural_figures")
-                 .rename(columns={"Name": "polity_id", "slice_year": "year"}))
+    # birth-FLOW: figures born in each (polity, slice)
+    flow = joined.groupby(["Name", "slice_year"]).size().reset_index(name="born")
+    intervals = polys[["Name", "FromYear", "ToYear"]].drop_duplicates()
+    out = build_vector(flow, intervals, slices, args.mode)
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)   # Phase 5 guardrail
     out.to_csv(out_path, index=False)
-    print(f"wrote {out_path}  ({len(out):,} polity-slices, "
-          f"{int(out['cultural_figures'].sum()):,} figures placed)")
+    print(f"wrote {out_path}  [{args.mode}]  ({len(out):,} polity-slices, "
+          f"{len(joined):,} figures placed across {out['polity_id'].nunique()} polities)")
 
 
 if __name__ == "__main__":

@@ -24,7 +24,9 @@ them here, then run the pipeline. Nothing in the repo fetches them automatically
 - Columns required: `lon, lat, birth_year` (common spellings like `LON`/`LAT`/`birthyear`
   are auto-normalized).
 - Also needs `cliopatria_polities_only.geojson` (above).
-- Then: `python pipeline/compute_culture.py` → `data/processed/vectors/culture.csv`.
+- Then: `python pipeline/compute_culture.py` → `data/processed/vectors/culture.csv`
+  (cumulative **stock** of cultural capital by default; `--mode flow` for the
+  one-slice birth-pulse version).
 
 After staging and running the two scripts, re-run `pipeline/align_territory.py` to
 re-emit `web/facts.js` / `web/totals.js` with the new facts attached; the lenses
