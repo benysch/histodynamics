@@ -55,30 +55,42 @@
     legend.className = "sb-note"; legend.style.marginTop = "8px";
     legend.style.display = "flex"; legend.style.flexWrap = "wrap"; legend.style.gap = "4px 12px";
     sec.appendChild(summary); sec.appendChild(caveat); sec.appendChild(legend);
+    var foot = document.createElement("div");
+    foot.className = "sb-note"; foot.style.marginTop = "6px"; foot.style.opacity = ".7";
+    foot.textContent = "\u201CLeads\u201D = top single polity; catch-all bundles (Unrecorded / Smaller) are excluded.";
+    sec.appendChild(foot);
+
+    // robustness ribbon: the focused leader's share band across ALL weightings,
+    // over time — how much its prominence depends on how you define power.
+    var ribLabel = document.createElement("div");
+    ribLabel.className = "sb-label"; ribLabel.style.marginTop = "14px";
+    var rib = svg("svg", { viewBox: "0 0 300 84", style: "width:100%;height:auto" });
+    var ribNote = document.createElement("div");
+    ribNote.className = "sb-note"; ribNote.style.opacity = ".7"; ribNote.style.marginTop = "2px";
+    ribNote.textContent = "Shaded = share range over every weighting; line = your current weights.";
+    sec.appendChild(ribLabel); sec.appendChild(rib); sec.appendChild(ribNote);
     opts.container.appendChild(sec);
 
     var cur = { year: null, params: {}, focusId: null };
 
-    // Coalesce bursts of update() (slider drags fire one per rAF already, but a
-    // weight change repaints both the chart and us) into a single repaint.
-    var pending = false;
     function update(s) {
       cur = Object.assign(cur, s);
-      if (pending) return;
-      pending = true;
-      (global.requestAnimationFrame || function (f) { setTimeout(f, 16); })(function () {
-        pending = false; paint();
-      });
+      paint();
     }
 
     function paint() {
       tri.innerHTML = "";
+      // Precompute the components' within-slice shares ONCE for this year; every
+      // cell is then colored by a cheap weight-blend (math stays in sensitivity.js).
+      // This used to call the full composite engine per cell —
+      // O(cells x polities x components) on every repaint of the slider.
+      var leaderAt = global.Sensitivity.prepareLeader(lensId, cur.year);
       var seen = {};
       for (var i = 0; i < R_FILL; i++) {
         for (var j = 0; i + j < R_FILL; j++) {
-          cell(latBary(i, j, R_FILL), latBary(i+1, j, R_FILL), latBary(i, j+1, R_FILL), seen);
+          cell(latBary(i, j, R_FILL), latBary(i+1, j, R_FILL), latBary(i, j+1, R_FILL), seen, leaderAt);
           if (i + j < R_FILL - 1)
-            cell(latBary(i+1, j, R_FILL), latBary(i, j+1, R_FILL), latBary(i+1, j+1, R_FILL), seen);
+            cell(latBary(i+1, j, R_FILL), latBary(i, j+1, R_FILL), latBary(i+1, j+1, R_FILL), seen, leaderAt);
         }
       }
       vlabel("Population", V[0][0], V[0][1] - 7, "middle");
@@ -88,10 +100,49 @@
       summary.textContent = global.Sensitivity.summarize(lensId, cur.focusId, cur.year, R_FILL);
       paintCaveat();
       paintLegend(seen);
+      paintRibbon();
     }
 
-    function cell(a, b, c, seen) {
-      var cen = [(a[0]+b[0]+c[0])/3, (a[1]+b[1]+c[1])/3];
+    // share band of the focused leader across the whole weight simplex, per year
+    function paintRibbon() {
+      rib.innerHTML = "";
+      if (!cur.focusId) { ribLabel.textContent = ""; return; }
+      var pts = global.Sensitivity.robustnessRibbon(lensId, cur.focusId, cur.params, 10);
+      if (!pts.length) return;
+      ribLabel.textContent = "How robust is " + global.Sensitivity.nameOf(cur.focusId) + "?";
+      var W = 300, H = 84, padL = 4, padR = 4, padT = 8, padB = 16;
+      var y0 = pts[0].year, y1 = pts[pts.length - 1].year;
+      var maxShare = 0;
+      pts.forEach(function (p) { if (p.max > maxShare) maxShare = p.max; });
+      maxShare = Math.max(maxShare, 1e-6);
+      function X(yr) { return padL + (yr - y0) / ((y1 - y0) || 1) * (W - padL - padR); }
+      function Y(sh) { return (H - padB) - sh / maxShare * (H - padT - padB); }
+      var color = global.Sensitivity.colorOf(cur.focusId, "#888");
+
+      // band (min..max)
+      var top = pts.map(function (p) { return X(p.year) + "," + Y(p.max); });
+      var bot = pts.slice().reverse().map(function (p) { return X(p.year) + "," + Y(p.min); });
+      rib.appendChild(svg("path", { d: "M" + top.join("L") + "L" + bot.join("L") + "Z",
+        fill: color, "fill-opacity": "0.22", stroke: "none" }));
+      // current-weights line
+      rib.appendChild(svg("path", {
+        d: "M" + pts.map(function (p) { return X(p.year) + "," + Y(p.current); }).join("L"),
+        fill: "none", stroke: color, "stroke-width": "1.5" }));
+      // baseline + endpoint year ticks
+      rib.appendChild(svg("line", { x1: padL, y1: H - padB, x2: W - padR, y2: H - padB,
+        stroke: "var(--grid)", "stroke-width": "1" }));
+      [[y0, "start", padL], [y1, "end", W - padR]].forEach(function (t) {
+        var tx = svg("text", { x: t[2], y: H - 4, "text-anchor": t[1],
+          "font-family": '"Segoe UI",system-ui,sans-serif', "font-size": "9", fill: "var(--muted)" });
+        tx.textContent = (t[0] < 0 ? (-t[0]) + " BCE" : t[0] + " CE"); rib.appendChild(tx);
+      });
+    }
+
+    function cell(a, b, c, seen, leaderAt) {
+      // full 3-component centroid — the third coordinate (Economy) was dropped
+      // before, so cells were colored as if economy weight were ~0 regardless of
+      // their position toward the Economy vertex.
+      var cen = [(a[0]+b[0]+c[0])/3, (a[1]+b[1]+c[1])/3, (a[2]+b[2]+c[2])/3];
       var who = leaderAt(cen);
       seen[who] = 1;
       var pa = cart(a), pb = cart(b), pc = cart(c);
@@ -102,13 +153,8 @@
       }));
     }
 
-    // leader at one barycentric weight — a cached blend (no engine recompute per
-    // cell; the components are cached per slice in sensitivity.js).
-    function leaderAt(bary) {
-      var params = {};
-      lens.components.forEach(function (comp, idx) { params[comp.weightKey] = bary[idx]; });
-      return global.Sensitivity.leaderAtWeights(lensId, cur.year, params);
-    }
+    // leader probing now uses Sensitivity.prepareLeader (see paint), which
+    // precomputes component shares once per slice instead of per cell.
 
     function vlabel(t, x, y, anchor) {
       var el = svg("text", { x: x, y: y, "text-anchor": anchor,
@@ -186,26 +232,18 @@
 })(window);
 
 /* ---------------------------------------------------------------------------
- * FOCUS-DRAW HOOK (one edit in Demograph's renderer, see docs/INTEGRATION.md)
+ * The robustness band is now drawn as a sparkline inside the panel itself
+ * (paintRibbon, above): the focused leader's share range across every weighting,
+ * over time. That path is self-contained and needs no renderer changes.
  *
- * When a polity is focused, draw the robustness band before its stream so the
- * uncertainty sits behind the solid line:
+ * OPTIONAL — overlay it ON the main chart's focused stream instead. `ribbonPath`
+ * returns an SVG "d" given x(year)->px and y(share)->px. NOTE this chart is
+ * VERTICAL: time is yScale(year) and width is xScale(share), and a focused
+ * region is drawn split around its `anchor` stream with a silhouette offset — so
+ * a from-origin band won't line up. To hug the drawn stream you'd pass the
+ * focused region's own edge scales (not xScale from 0) and swap the coordinate
+ * order so points read (sharePx, yearPx). Verify alignment in the browser before
+ * relying on it — that geometry can't be checked headless.
  *
- *   var band = window.ribbonPath(current.lensId, focusedId, current.params,
- *                                xScale, yScaleForFocusedStream);
- *   focusGroup.insert("path", ":first-child")
- *             .attr("d", band)
- *             .attr("fill", "var(--ink)").attr("fill-opacity", 0.10).attr("stroke", "none");
- *
- * Mount the panel alongside the lens controls:
- *
- *   var sens = window.mountSensitivity({
- *     container: document.getElementById("sidebar"),
- *     lensId: "power",
- *     onWeights: function (params) {          // user clicked the triangle
- *       current.params = params; rebuild();   // rebuild() also calls sens.update()
- *     }
- *   });
- *   // in rebuild(), after redraw:
  *   sens.update({ year: hoveredYear, params: current.params, focusId: focusedId });
  * ------------------------------------------------------------------------- */

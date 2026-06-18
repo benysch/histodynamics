@@ -2,7 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Histodynamics — a histomap you can re-measure</title>
+<meta name="description" content="Four thousand years of world history as one vertical stream graph — switch the metric live between population, territory, economy, or a relative-power blend whose weights you set, and watch the chart re-rank." />
+<meta name="theme-color" content="#ead9bd" />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://histodynamics.vercel.app" />
+<meta property="og:title" content="Histodynamics — a histomap you can re-measure" />
+<meta property="og:description" content="A histomap whose 'relative power' metric is a dial you control: blend population, territory, and economy and watch civilizations trade places." />
+<meta property="og:image" content="https://histodynamics.vercel.app/og-cover.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Histodynamics — a re-measurable histomap of world history." />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Histodynamics — a histomap you can re-measure" />
+<meta name="twitter:description" content="Switch the metric live — population, territory, economy, or a relative-power blend you define — and watch the streams re-rank." />
+<meta name="twitter:image" content="https://histodynamics.vercel.app/og-cover.png" />
 <style>
   :root { --bg: #ead9bd; --ink: #3d2f1f; --muted: #79633f; --outline: #2e2113;
           --grid: rgba(61,47,31,0.10); --gray: #cbbfa8; }
@@ -1543,9 +1560,9 @@ document.addEventListener("keydown", ev => {
   // --- sensitivity: ternary "who leads" phase diagram (commit 13) ----------
   function leaderAt(params, year) {
     var sh = window.Engine.computeSlice(window.LENS_BY_ID.power, year, params).shares;
-    var best = null, bv = -Infinity;
-    for (var p in sh) if (sh[p] > bv) { bv = sh[p]; best = p; }
-    return best;
+    // top non-aggregate polity — matches the phase diagram / robustness panel,
+    // so the on-chart band tracks the same leader (sensitivity.js leaderOf).
+    return window.Sensitivity.leaderOf(sh);
   }
   function updateSensitivity() {
     if (!sens || sensYear == null) return;

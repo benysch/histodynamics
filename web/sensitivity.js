@@ -63,36 +63,50 @@
     return best;
   }
 
-  // Component shares are pure per (lens, year). The panel recolors a ~270-cell
-  // triangle on every weight/year change; cache the last slice's components so a
-  // cell asks for its leader via one cheap blend instead of a full engine
-  // recompute (docs/BUILD_ORDER.md step 15 — "cache component shares per year").
-  var _slice = { key: null, comps: null };
-  function componentShares(lens, year) {
-    var key = lens.id + "@" + year;
-    if (_slice.key !== key) { _slice.key = key; _slice.comps = compShares(lens, year); }
-    return _slice.comps;
-  }
-  function leaderAtWeights(lensId, year, params) {
-    var lens = global.LENS_BY_ID[lensId];
-    return argmax(blend(componentShares(lens, year), params));
+  // Catch-all bundles ("Unrecorded X states", "Smaller X states") are residual
+  // aggregates, not single polities. Because the composite renormalizes weights
+  // per polity over the components it actually has, a population-only bundle can
+  // out-score fully-attributed polities in GDP-sparse eras and falsely "lead" the
+  // phase diagram. Exclude them from leadership only — they still render with
+  // their honest blended widths in the chart.
+  function isAggregate(id) { return /^(Unrecorded|Smaller)\b/.test(id); }
+
+  // top single (non-aggregate) polity; falls back to aggregates only if a slice
+  // somehow contains nothing else, so the diagram never goes blank.
+  function leaderOf(shares) {
+    var best = null, bv = -Infinity, p;
+    for (p in shares) if (!isAggregate(p) && shares[p] > bv) { bv = shares[p]; best = p; }
+    if (best == null) for (p in shares) if (shares[p] > bv) { bv = shares[p]; best = p; }
+    return best;
   }
 
   /* who leads at each grid point. 2 comps -> strip; 3 -> ternary triangle. */
   function leaderSweep(lensId, year, R) {
     var lens = global.LENS_BY_ID[lensId];
-    var comps = componentShares(lens, year);
+    var comps = compShares(lens, year);
     return simplexGrid(lens.components.length, R || 16).map(function (bary) {
       var s = blend(comps, weightsFrom(lens, bary));
-      var leader = argmax(s);
+      var leader = leaderOf(s);
       return { bary: bary, leader: leader, share: leader ? s[leader] : 0 };
     });
+  }
+
+  /* Fast leader probe for one slice. Precomputes each component's within-slice
+   * shares ONCE, then returns leader(bary) as a cheap weight-blend + argmax — no
+   * per-call engine recompute. Use this to color a phase-diagram grid: the
+   * component shares are identical at every weight, only the blend changes. */
+  function prepareLeader(lensId, year) {
+    var lens = global.LENS_BY_ID[lensId];
+    var comps = compShares(lens, year);
+    return function (bary) {
+      return leaderOf(blend(comps, weightsFrom(lens, bary)));
+    };
   }
 
   /* fraction of the weight space where `polityId` holds each rank + share range */
   function rankStability(lensId, polityId, year, R) {
     var lens = global.LENS_BY_ID[lensId];
-    var comps = componentShares(lens, year);
+    var comps = compShares(lens, year);
     var grid = simplexGrid(lens.components.length, R || 16);
     var rankCount = {}, n = grid.length, sMin = Infinity, sMax = 0, leadCount = 0;
     grid.forEach(function (bary) {
@@ -100,7 +114,7 @@
       var mine = s[polityId] || 0;
       sMin = Math.min(sMin, mine); sMax = Math.max(sMax, mine);
       var rank = 1;
-      for (var p in s) if (s[p] > mine + 1e-12) rank++;
+      for (var p in s) if (!isAggregate(p) && s[p] > mine + 1e-12) rank++;
       rankCount[rank] = (rankCount[rank] || 0) + 1;
       if (rank === 1) leadCount++;
     });
@@ -116,7 +130,7 @@
     var years = global.Engine.sliceYears();
     var grid = simplexGrid(lens.components.length, R || 10);
     return years.map(function (year) {
-      var comps = componentShares(lens, year);
+      var comps = compShares(lens, year);
       var lo = Infinity, hi = 0;
       grid.forEach(function (bary) {
         var v = blend(comps, weightsFrom(lens, bary))[polityId] || 0;
@@ -159,7 +173,9 @@
 
   global.Sensitivity = {
     leaderSweep: leaderSweep,
-    leaderAtWeights: leaderAtWeights,
+    prepareLeader: prepareLeader,
+    leaderOf: leaderOf,
+    isAggregate: isAggregate,
     rankStability: rankStability,
     robustnessRibbon: robustnessRibbon,
     summarize: summarize,

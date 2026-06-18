@@ -81,7 +81,10 @@ shipped v0.1, so the core is provable before this tier lands.
 > N components, which is the architecture paying off. Verify the GDP lens
 > degrades toward population pre-1500 (the honest tell). NB: the live emitter is
 > `align_territory.py` (not the superseded `emit_facts.py`/`compute_orders.py`),
-> and `order.js` still snaps by the scalar `wArea`, not a full weight vector.
+> and `order.js` matches the full pop/territory/economy weight vector (so
+> economy-led ≠ population-led). Order baking now adds succession fidelity
+> (`pipeline/succession.py`); regression tests in `tests/` (run via `node --test`
+> and `python -m unittest`, wired in `.github/workflows/tests.yml`).
 
 ### 13 — Sensitivity engine + panel
 `web/sensitivity.js` · `web/sensitivity-panel.js`

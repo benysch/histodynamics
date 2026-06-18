@@ -38,6 +38,8 @@ import numpy as np
 import pandas as pd
 import pyogrio
 
+import succession   # shared wiggle + succession-fidelity ordering core
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "pipeline"))
 
@@ -62,43 +64,33 @@ BUNDLE_NAMES = {
 }
 
 
-# --- per-lens stacking order (wiggle minimization, ported from
-#     pipeline/compute_orders.py but over the aggregated streams) ------------
-def _wiggle(order, W):
-    cum = np.zeros(W.shape[0]); total = 0.0
-    for idx in order:
-        d = np.diff(cum); total += float(np.dot(d, d)); cum = cum + W[:, idx]
-    return total
+# --- per-lens stacking order: wiggle minimization + succession fidelity ----
+#     Wiggle math lives in succession.py now; this adds the constraint that two
+#     streams aren't placed adjacent as a false handoff (A falls as B rises) with
+#     no real population transfer between them. Transfers come from
+#     data/processed/transfer_matrix.csv (pipeline/transfer_matrix.py), mapped
+#     onto streams with the SAME name->stream classifier used everywhere here.
+def stream_transfers(name_to_stream):
+    path = ROOT / "data" / "processed" / "transfer_matrix.csv"
+    pair = {}
+    if not path.exists():
+        return pair
+    tf = pd.read_csv(path)
+    for a, b, pop in zip(tf["from"], tf["to"], tf["population"]):
+        sa, sb = name_to_stream.get(a), name_to_stream.get(b)
+        if sa and sb and sa != sb:
+            key = frozenset((sa, sb))
+            pair[key] = pair.get(key, 0.0) + float(pop)
+    return pair
 
 
-def _inside_out(W):
-    sums = W.sum(axis=0); idxs = list(np.argsort(-sums))
-    tops, bottoms, ts, bs = [], [], 0.0, 0.0
-    for idx in idxs:
-        if ts < bs: tops.append(idx); ts += sums[idx]
-        else: bottoms.append(idx); bs += sums[idx]
-    return list(reversed(bottoms)) + tops
-
-
-def _optimize(W, max_passes=8):
-    """inside-out start, then local adjacent swaps that lower wiggle."""
-    order = _inside_out(W); best = _wiggle(order, W)
-    for _ in range(max_passes):
-        improved = False
-        for i in range(len(order) - 1):
-            cand = order[:]; cand[i], cand[i + 1] = cand[i + 1], cand[i]
-            c = _wiggle(cand, W)
-            if c < best - 1e-12:
-                order, best, improved = cand, c, True
-        if not improved:
-            break
-    return order
-
-
-def lens_order(streams, share_rows):
-    """share_rows: dict stream -> [share per year]. Returns streams bottom->top."""
-    W = np.array([share_rows[s] for s in streams]).T  # years x streams
-    return [streams[i] for i in _optimize(W)]
+def lens_order(streams, share_rows, pair):
+    """share_rows: dict stream -> [share per year]. Returns streams bottom->top,
+    minimizing wiggle subject to no false-handoff adjacency (succession.py)."""
+    W = np.array([share_rows[s] for s in streams]).T   # years x streams
+    forbidden = succession.forbidden_pairs(W, streams, pair)
+    order, _ = succession.optimize(W, forbidden)
+    return [streams[i] for i in order]
 
 
 def exclusive_area(years, name_to_stream, res_m=5000):
@@ -360,11 +352,12 @@ def main():
         "Economic":                  (0.25, 0.15, 0.60),
     }
     orders = {"pop": streams}                     # keep Demograph's optimized order
-    print("optimizing per-lens orders ...")
-    orders["area"] = lens_order(streams, area_sh)
-    orders["gdp"]  = lens_order(streams, gdp_sh)
+    pair = stream_transfers(name_to_stream)
+    print(f"optimizing per-lens orders (succession-aware; {len(pair)} stream transfer pairs) ...")
+    orders["area"] = lens_order(streams, area_sh, pair)
+    orders["gdp"]  = lens_order(streams, gdp_sh, pair)
     for label, (wp, wa, wg) in presets.items():
-        orders[f"power:{label}"] = lens_order(streams, blend(wp, wa, wg))
+        orders[f"power:{label}"] = lens_order(streams, blend(wp, wa, wg), pair)
     emit_js("ORDERS", orders, WEB / "orders.js")
     with (WEB / "orders.js").open("a", encoding="utf-8") as f:
         f.write("window.ORDER_PRESETS = " +

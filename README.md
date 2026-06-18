@@ -114,6 +114,25 @@ server.
   [`docs/INTEGRATION.md`](docs/INTEGRATION.md) — a banner makes the distinction
   clear.
 
+## Tests
+
+Two zero-config suites, run in CI on every push/PR
+([`.github/workflows/tests.yml`](.github/workflows/tests.yml)):
+
+```bash
+node --test                                       # metric-layer regression (no deps)
+python -m unittest discover -s tests -p "test_*.py"   # ordering core (needs numpy + pandas)
+```
+
+[`tests/metric-layer.test.js`](tests/metric-layer.test.js) loads the web globals
+into a fake `window` (exactly index.html's load order) and locks: the phase-diagram
+fast path (`prepareLeader`) is identical to the engine's argmax at every weight;
+`pickOrder` distinguishes population-, territory-, and economy-led weights (the 3‑D
+preset fix); composite shares are a proper distribution; and no catch-all bundle is
+ever crowned leader. [`tests/test_succession.py`](tests/test_succession.py) exercises
+the wiggle + succession-fidelity core ([`pipeline/succession.py`](pipeline/succession.py)):
+orders drive forbidden "false handoff" adjacencies to zero, then minimize wiggle.
+
 ## Rebuild the data
 
 The pipeline emits **raw facts**, not pre-baked shares — the frontend turns them
