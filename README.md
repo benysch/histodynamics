@@ -110,18 +110,38 @@ same classifier) so area shares the renderer's keys. It supersedes the flat
 `compute_area.py`/`emit_facts.py` template, which assumed a single `polity_id`
 taxonomy that never reconciled with the aggregated streams.
 
-**Known limits (territory v1):** raw polygon areas are summed without
-exclusive-area overlap resolution, so the per-slice denominator follows the
-mapped total once it exceeds total ice-free land (the residual closes to ~0 in
-the modern era rather than letting shares exceed 100%). All lenses reuse
-Demograph's one wiggle-optimized stacking order — streams re-scale but don't
-re-stack. Both are future refinements (`compute_area.py`'s exclusive-area pass,
-`compute_orders.py`'s per-lens orders).
+`align_territory.py` also threads in GDP (step 3) when `gdp_intusd.csv` exists,
+emitting `facts.js` with population + territory + economy in one pass.
 
-**Economy (GDP):** still pending — `compute_gdp.py` needs Maddison-derived inputs
-(`maddison_gdppc.csv`, a polity↔country mapping) that aren't vendored and have no
-downloader yet, and `emit_facts.py`/`align_territory.py` would need a `gdp_int_usd`
-column threaded through. The Economy lens stays disabled until then.
+```bash
+# 3. Economy (GDP). Downloads Maddison (~1.8 MB) + Natural Earth 50m (~0.8 MB),
+#    builds compute_gdp's inputs, attributes GDP, then re-runs align (which now
+#    threads gdp_int_usd into facts.js):
+curl -L https://www.rug.nl/ggdc/historicaldevelopment/maddison/data/mpd2020.xlsx -o data/raw/mpd2020.xlsx
+curl -L https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_0_countries.zip -o data/raw/ne_50m_admin_0_countries.zip
+python pipeline/build_gdp_inputs.py    # -> maddison_gdppc / region_for_country / polity_country_pop
+python pipeline/compute_gdp.py         # -> data/processed/gdp_intusd.csv
+python pipeline/align_territory.py     # re-emit facts.js with population + area + GDP
+```
+
+GDP method (`docs/gdp-and-sensitivity.md`): each polity's population is split
+across the modern countries its territory covers, each country-share valued at
+that country's Maddison GDP-per-capita for the year, summed. The documented
+method uses HYDE rasterization for the split; `build_gdp_inputs.py` approximates
+it by **territory** area-fraction (Cliopatria × Natural Earth) since HYDE isn't
+vendored. Maddison gdp-per-capita is interpolated onto the slice years within
+each country's observed span.
+
+**Honesty (built in):** most countries' Maddison series start in the 1800s, so
+pre-1900 GDP rests largely on regional/world-mean fallbacks (`est_frac` ≈ 1) and
+the Economy lens degrades toward Population — a true statement about what's
+knowable. Where real figures exist (China from antiquity, Europe from ~1500) it
+diverges sharply: at 2000 the USA is 23% of world GDP but 5% of population.
+
+**Known limits:** the area-weighted population split (vs HYDE-weighted) mainly
+affects multi-country empires in the modern era; raw Cliopatria areas aren't
+overlap-resolved; all lenses reuse Demograph's one stacking order. All are
+future refinements.
 
 ## Data & credits
 

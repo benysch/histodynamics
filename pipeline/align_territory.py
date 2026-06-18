@@ -42,6 +42,7 @@ sys.path.insert(0, str(ROOT / "pipeline"))
 
 CLIO = ROOT / "data" / "raw" / "cliopatria_polities_only.geojson"
 POP_SHARES = ROOT / "data" / "processed" / "population_shares.csv"
+GDP_CSV = ROOT / "data" / "processed" / "gdp_intusd.csv"   # optional (pipeline/compute_gdp.py)
 DATA_JS = ROOT / "web" / "data.js"
 FP_JSON = ROOT / "data" / "raw" / "wikidata_fingerprint.json"
 WEB = ROOT / "web"
@@ -144,6 +145,25 @@ def main():
     print(f"avg mapped land per slice: {mapped_avg/1e6:.1f}M km^2 "
           f"({mapped_avg/WORLD_LAND_KM2:.0%} of {WORLD_LAND_KM2/1e6:.0f}M ice-free)")
 
+    # --- optional GDP (data/processed/gdp_intusd.csv from compute_gdp.py),
+    #     aggregated to streams with the same raw->stream mapping; world total
+    #     for the slice is all attributed GDP (so unattributed GDP is a residual). ---
+    gdp = {y: {} for y in years}      # stream -> int$
+    gdp_world = {y: 0.0 for y in years}
+    if GDP_CSV.exists():
+        gd = pd.read_csv(GDP_CSV)
+        for r in gd.itertuples(index=False):
+            if r.year not in gdp_world:
+                continue
+            gdp_world[r.year] += float(r.gdp_int_usd)
+            stream = name_to_stream.get(r.polity_id)
+            if stream is not None:
+                gdp[r.year][stream] = gdp[r.year].get(stream, 0.0) + float(r.gdp_int_usd)
+        print(f"GDP: {len(gd):,} polity-years aggregated; world GDP "
+              f"{gdp_world[years[-1]]/1e12:.1f}T int$ at {years[-1]}")
+    else:
+        print("GDP: gdp_intusd.csv absent — economy lens stays disabled")
+
     # --- emit web/polities.js ---
     polities = [{"id": s, "name": s, "civ": regions.get(s, "unknown")} for s in streams]
     emit_js("POLITIES", polities, WEB / "polities.js")
@@ -159,6 +179,8 @@ def main():
                 entry["population"] = pop
             if s in area[y]:
                 entry["area_km2"] = round(area[y][s], 3)
+            if s in gdp[y]:
+                entry["gdp_int_usd"] = round(gdp[y][s], 1)
             if entry:
                 slot[s] = entry
         facts[str(y)] = slot
@@ -176,8 +198,10 @@ def main():
     for i, y in enumerate(years):
         world_pop = sum((pop_series[s][i]["pop"] or 0.0) for s in order)  # incl. residual
         mapped = sum(area[y].values())
-        totals[str(y)] = {"population": world_pop,
-                          "area_km2": max(WORLD_LAND_KM2, mapped)}
+        t = {"population": world_pop, "area_km2": max(WORLD_LAND_KM2, mapped)}
+        if gdp_world[y] > 0:
+            t["gdp"] = gdp_world[y]
+        totals[str(y)] = t
     emit_js("TOTALS", totals, WEB / "totals.js")
 
     # --- emit web/orders.js : reuse Demograph's wiggle-optimized order for every
