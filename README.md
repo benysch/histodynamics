@@ -70,12 +70,15 @@ server.
 - [`web/index.html`](web/index.html) — the **real** Demograph renderer over the
   full historical dataset, with the metric layer wired in: a "Measure by"
   selector drives `render()` through the engine. **Population**, **territory**,
-  and **relative power** (a population↔territory blend with live weight sliders)
-  are all live; **economy** is mounted but disabled until GDP facts land. Switch
-  to Territory and the Steppe swells while densely-populated regions shrink — the
-  re-measurement the project is about. The seam is reversible — absent
-  `web/facts.js` it falls back to the population-only chart. See
-  [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
+  **economy**, and **relative power** (a population/territory/economy blend with
+  live weight sliders) are all live. Switch to Territory and the Steppe swells
+  while densely-populated regions shrink — the re-measurement the project is
+  about. A **sensitivity** panel adds a ternary "who leads, by how you define
+  power" phase diagram (`sensitivity.js` / `sensitivity-panel.js`): each point in
+  the Population–Territory–Economy triangle is colored by whoever leads at those
+  weights for the chosen year; click a point to adopt its weights. The seam is
+  reversible — absent `web/facts.js` it falls back to the population-only chart.
+  See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
 - [`web/preview.html`](web/preview.html) — a **multi-lens prototype** that drives
   the metric layer (population / territory / economy / relative power) over
   illustrative [`web/sample-data.js`](web/sample-data.js). It exists to demo
@@ -156,7 +159,12 @@ so weights only rescale streams between presets.
 mainly affects multi-country empires in the modern era; exclusive area is
 grid-resolved at 5 km, so polities smaller than a few cells are undercounted;
 the succession-fidelity constraint on stream adjacency (`compute_orders.py`) is
-skipped. All are future refinements.
+skipped; the sensitivity panel's **robustness ribbon** (`ribbonPath`) isn't yet
+drawn behind a stream — Demograph focuses by civilization, not a single polity,
+so there's no single focused stream to band; and because the composite
+renormalizes weights per stream over the components it has, population-only
+"Unrecorded" streams can lead the phase diagram in eras with sparse GDP. All are
+future refinements.
 
 ## Data & credits
 

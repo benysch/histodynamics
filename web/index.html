@@ -1276,6 +1276,8 @@ document.addEventListener("keydown", ev => {
 <script src="engine.js"></script>
 <script src="order.js"></script>
 <script src="lens-adapter.js"></script>
+<script src="sensitivity.js"></script>
+<script src="sensitivity-panel.js"></script>
 <script>
 (function () {
   "use strict";
@@ -1327,6 +1329,7 @@ document.addEventListener("keydown", ev => {
 
   // --- Edit 2: hold the active lens + weights; rebuild D.series, then redraw. ---
   var current = { lensId: "pop", params: defaultParams(window.LENS_BY_ID.power) };
+  var sens = null, sensYear = null;   // sensitivity panel (mounted below)
   function rebuild(animate) {
     if (!available[current.lensId]) return;
     // The metric layer drives width via shares; Demograph's own absolute toggle
@@ -1352,6 +1355,7 @@ document.addEventListener("keydown", ev => {
       if (rA[i]) rA[i].share = composite ? 0 : v;
     });
     if (typeof render === "function") render(!!animate);
+    if (sens) updateSensitivity();
   }
   window.rebuildFromLens = rebuild;
 
@@ -1417,6 +1421,54 @@ document.addEventListener("keydown", ev => {
     scheduleRebuild(true);
   }
   note.textContent = window.LENS_BY_ID[current.lensId].description || "";
+
+  // --- sensitivity: ternary "who leads" phase diagram (commit 13) ----------
+  function leaderAt(params, year) {
+    var sh = window.Engine.computeSlice(window.LENS_BY_ID.power, year, params).shares;
+    var best = null, bv = -Infinity;
+    for (var p in sh) if (sh[p] > bv) { bv = sh[p]; best = p; }
+    return best;
+  }
+  function updateSensitivity() {
+    if (!sens || sensYear == null) return;
+    sens.update({ year: sensYear, params: current.params,
+                  focusId: leaderAt(current.params, sensYear) });
+  }
+  function adoptWeights(params) {                 // user clicked the triangle
+    Object.keys(sliders).forEach(function (k) {
+      if (params[k] != null) { sliders[k].value = params[k]; current.params[k] = params[k]; }
+    });
+    if (current.lensId !== "power") selectLens("power"); else scheduleRebuild(true);
+  }
+  function fmtYear(y) { return y < 0 ? (-y) + " BCE" : (y <= 1 ? "1 CE" : y + " CE"); }
+
+  if (available.power && typeof window.mountSensitivity === "function") {
+    // give the panel the renderer's real palette (POLITIES carries no color)
+    if (window.Sensitivity) window.Sensitivity.colorOf = function (id, fb) {
+      try { return (typeof color === "function" && color(id)) || fb || "#888"; }
+      catch (e) { return fb || "#888"; }
+    };
+    var sidebar = document.getElementById("sidebar");
+    // year control (the phase diagram is per-slice)
+    var ysec = document.createElement("div"); ysec.className = "sb-sec";
+    var ylab = document.createElement("div"); ylab.className = "sb-label";
+    var yinp = document.createElement("input");
+    yinp.type = "range"; yinp.min = 0; yinp.max = yrs.length - 1; yinp.step = 1;
+    var di = yrs.indexOf(2000); if (di < 0) di = yrs.length - 1;
+    yinp.value = di; yinp.style.width = "100%"; sensYear = yrs[di];
+    ylab.textContent = "Sensitivity year — " + fmtYear(sensYear);
+    yinp.addEventListener("input", function () {
+      sensYear = yrs[+yinp.value];
+      ylab.textContent = "Sensitivity year — " + fmtYear(sensYear);
+      updateSensitivity();
+    });
+    ysec.appendChild(ylab); ysec.appendChild(yinp); sidebar.appendChild(ysec);
+
+    sens = window.mountSensitivity({
+      container: sidebar, lensId: "power", onWeights: adoptWeights
+    });
+    updateSensitivity();
+  }
 })();
 </script>
 </body>
