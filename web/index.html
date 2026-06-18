@@ -1406,7 +1406,7 @@ document.addEventListener("keydown", ev => {
   }
 
   // --- Edit 1: the engine's globals. Prefer the emitted files (population +
-  // territory, keyed by the same 262 streams); else derive population only from
+  // territory, keyed by the same 261 streams); else derive population only from
   // HISTOMAP_DATA so the page still works. ---
   if (!window.FACTS) {
     window.POLITIES = polityKeys.map(function (k) { return { id: k, name: k, civ: Dh.regions[k] }; });

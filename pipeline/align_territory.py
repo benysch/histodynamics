@@ -7,7 +7,7 @@ metric layer's data globals (web/polities.js, facts.js, totals.js, orders.js).
 Why this exists
 ---------------
 The vendored compute_area.py / emit_facts.py assume a flat `polity_id` taxonomy,
-but Demograph's renderer (HISTOMAP_DATA) uses 262 *aggregated* streams: prominent
+but Demograph's renderer (HISTOMAP_DATA) uses 261 *aggregated* streams: prominent
 polities kept by name, sub-threshold ones rolled into per-family "Smaller X"
 bundles, plus population-only "Unrecorded X" overlays and a residual. To make a
 territory lens line up with that renderer, area must be keyed by those same

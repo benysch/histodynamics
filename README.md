@@ -127,7 +127,7 @@ python -m venv .venv
 #    download_hyde.py + compute_shares.py  -> population (persons) per polity per slice.
 #    Place Cliopatria & Natural Earth in data/raw/ first.
 
-# 2. Territory, aligned to Demograph's 262 aggregated streams and emitted as the
+# 2. Territory, aligned to Demograph's 261 aggregated streams and emitted as the
 #    metric-layer globals the renderer consumes. Downloads Cliopatria (~44 MB,
 #    ephemeral, gitignored under data/raw/):
 curl -L https://raw.githubusercontent.com/Seshat-Global-History-Databank/cliopatria/main/cliopatria.geojson.zip \

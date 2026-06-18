@@ -40,14 +40,24 @@ guesses before ~1500**, hovering near a subsistence floor. So:
 | File | Change |
 |------|--------|
 | `pipeline/compute_gdp.py` | **new** — cell-GDP attribution → `gdp_int_usd.csv` |
-| `pipeline/emit_facts.py` | add `gdp_int_usd` to facts; add world GDP to totals |
+| `pipeline/align_territory.py` | add `gdp_int_usd` to facts; add world GDP to totals (this is the live emitter — see its note below) |
 | `web/lenses.js` | add the `gdp` simple lens + a third composite component |
 | `web/engine.js` | **none** — composite already iterates N components |
-| `pipeline/compute_orders.py` | generalize composite to N components; new presets |
-| `web/order.js` | nearest-preset distance over N weights, not just `wArea` |
+| `pipeline/align_territory.py` | generalize composite to N components; new presets (the inline `lens_order`) |
+| `web/order.js` | unchanged — still snaps to the nearest preset by the single territory weight `wArea` (see note) |
 | `web/lens-adapter.js` | ≥3 components → weight bars instead of the balance bar |
 
 `engine.js` needing no change is the architecture paying off.
+
+> **Implementation notes (doc kept honest with the shipped code):**
+> - The live emitter is **`pipeline/align_territory.py`**, not `emit_facts.py`
+>   (which is a superseded Demograph template). It threads GDP and any
+>   `data/processed/vectors/*.csv` into `web/facts.js` / `totals.js`, and bakes
+>   per-lens orders via its inline `lens_order`, not `compute_orders.py`.
+> - **`order.js` was *not* changed to a full-weight-vector distance.** It still
+>   keys on the scalar territory weight `wArea` (matching the scalar
+>   `ORDER_PRESETS` that `align_territory.py` emits). The "surgical patch" below
+>   documents an option that was considered but not adopted.
 
 ### Surgical patches
 

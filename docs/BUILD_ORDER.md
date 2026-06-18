@@ -75,11 +75,13 @@ shipped v0.1, so the core is provable before this tier lands.
 > rules, and the sensitivity view's linearity insight.
 
 ### 12 — GDP as a third component
-`pipeline/compute_gdp.py` · `web/lenses.js` (v2) · `emit_facts.py` (+gdp, +world GDP total) ·
-generalize `pipeline/compute_orders.py`, `web/order.js`, `web/lens-adapter.js` (≥3 → weight bars)
+`pipeline/compute_gdp.py` · `web/lenses.js` (v2) · `pipeline/align_territory.py` (+gdp facts,
++world GDP total, per-lens orders via inline `lens_order`) · `web/lens-adapter.js`
 > One coherent commit. `engine.js` is untouched — the composite already iterates
 > N components, which is the architecture paying off. Verify the GDP lens
-> degrades toward population pre-1500 (the honest tell).
+> degrades toward population pre-1500 (the honest tell). NB: the live emitter is
+> `align_territory.py` (not the superseded `emit_facts.py`/`compute_orders.py`),
+> and `order.js` still snaps by the scalar `wArea`, not a full weight vector.
 
 ### 13 — Sensitivity engine + panel
 `web/sensitivity.js` · `web/sensitivity-panel.js`
@@ -95,6 +97,8 @@ edit to `web/index.html` (focus-draw hook per `sensitivity-panel.js`)
 ### 15 — Polish & deploy v0.2
 > Throttle the triangle's per-year repaint (cache component shares per year),
 > GDP tooltips with `est_frac`, low-confidence note. Tag `v0.2`.
+> The `est_frac` data is emitted by `pipeline/emit_gdp_meta.py` →
+> `web/gdp_meta.js` (`window.GDP_EST`), loaded in `web/index.html`.
 
 ---
 

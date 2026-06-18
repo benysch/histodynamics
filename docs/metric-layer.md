@@ -1,5 +1,14 @@
 # Metric Layer — Design Spec (v1)
 
+> **Note — superseded in part by v2.** This v1 spec describes a two-component
+> (population + territory) "relative power" lens. The shipped lens is **v2**:
+> three components (population, territory, **GDP**), default weights
+> 0.34/0.33/0.33, presets Demographic / Balanced / Sparks-led / Economic. For
+> the current schema and composite math see
+> [`gdp-and-sensitivity.md`](gdp-and-sensitivity.md) and `web/lenses.js`. The
+> §2 `Fact` / `SliceTotals` interfaces below also omit `gdp_int_usd` / `gdp`,
+> which the live code emits and reads.
+
 A swappable-metric histomap. Same stream-graph machinery as Demograph; the
 *metric* is a first-class, user-switchable dimension. Switching lenses reorders
 and rescales the whole chart live — including an honest, **user-defined**

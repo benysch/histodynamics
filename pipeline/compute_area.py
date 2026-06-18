@@ -1,6 +1,10 @@
 """
 compute_area.py
 ===============
+SUPERSEDED — not part of the live pipeline. Territory area for the shipped data
+is computed inside pipeline/align_territory.py (exclusive_area, keyed by the
+aggregated streams). This flat-polity version is kept for reference; do not run.
+
 Emit raw territory (km^2) per polity per time slice from Cliopatria border
 polygons -> data/processed/area_km2.csv
 
