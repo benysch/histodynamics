@@ -1264,6 +1264,12 @@ document.addEventListener("keydown", ev => {
 <!-- the active lens and calls render(); it is fully reversible — if no    -->
 <!-- metric data is derivable, the upstream population chart stands.       -->
 <!-- ============================================================ -->
+<!-- emitted metric-layer data (pipeline/align_territory.py). Optional: if these
+     404, the bridge falls back to a population-only derivation of HISTOMAP_DATA. -->
+<script src="polities.js"></script>
+<script src="facts.js"></script>
+<script src="totals.js"></script>
+<script src="orders.js"></script>
 <script src="lenses.js"></script>
 <script src="engine.js"></script>
 <script src="order.js"></script>
@@ -1280,68 +1286,74 @@ document.addEventListener("keydown", ev => {
     return Dh.order.reduce(function (s, k) { return s + (Dh.series[k][i].pop || 0); }, 0);
   }
 
-  // --- Edit 1 (inverted): derive the engine's globals from HISTOMAP_DATA. ---
-  // Population is the only metric present here; territory & GDP await the
-  // pipeline (pipeline/compute_area.py, compute_gdp.py -> emit_facts.py), so
-  // their lenses are mounted but disabled until web/facts.js carries them.
-  window.POLITIES = polityKeys.map(function (k) {
-    return { id: k, name: k, civ: Dh.regions[k] };
-  });
-  var FACTS = {}, TOTALS = {};
-  yrs.forEach(function (y, i) {
-    var slice = {};
-    polityKeys.forEach(function (k) { slice[k] = { population: Dh.series[k][i].pop || 0 }; });
-    FACTS[String(y)] = slice;
-    TOTALS[String(y)] = { population: worldAt(i) };
-  });
-  window.FACTS = FACTS;
-  window.TOTALS = TOTALS;
-  window.ORDERS = { pop: polityKeys };          // population keeps Demograph's baked order
-  window.ORDER_PRESETS = window.ORDER_PRESETS || {};
+  // --- Edit 1: the engine's globals. Prefer the emitted files (population +
+  // territory, keyed by the same 262 streams); else derive population only from
+  // HISTOMAP_DATA so the page still works. ---
+  if (!window.FACTS) {
+    window.POLITIES = polityKeys.map(function (k) { return { id: k, name: k, civ: Dh.regions[k] }; });
+    var FB = {}, TB = {};
+    yrs.forEach(function (y, i) {
+      var slice = {};
+      polityKeys.forEach(function (k) { slice[k] = { population: Dh.series[k][i].pop || 0 }; });
+      FB[String(y)] = slice;
+      TB[String(y)] = { population: worldAt(i) };
+    });
+    window.FACTS = FB; window.TOTALS = TB;
+    window.ORDERS = { pop: polityKeys };
+    window.ORDER_PRESETS = window.ORDER_PRESETS || {};
+  }
+  var FACTS = window.FACTS;
 
   // engine.js binds its default Engine at load (before these globals existed),
   // so re-create it now that the data is in place.
   window.Engine = window.createEngine();
 
-  function lensHasData(lens) {
-    if (lens.kind === "composite") {
-      return lens.components.every(function (c) { return lensHasData(window.LENS_BY_ID[c.lensId]); });
-    }
+  // a simple lens is available if any polity carries its fact; a composite is
+  // available once at least two of its components are (so it's a real blend —
+  // here population + territory; economy joins when GDP facts land).
+  function simpleHasData(lens) {
     var mid = FACTS[String(yrs[Math.floor(yrs.length / 2)])] || {};
-    return polityKeys.some(function (k) { return lens.extract(mid[k]) != null; });
+    return polityKeys.some(function (k) { return mid[k] && lens.extract(mid[k]) != null; });
+  }
+  function lensHasData(lens) {
+    if (lens.kind !== "composite") return simpleHasData(lens);
+    var n = lens.components.filter(function (c) { return lensHasData(window.LENS_BY_ID[c.lensId]); }).length;
+    return n >= 2;
   }
   var available = {};
   window.LENSES.forEach(function (l) { available[l.id] = lensHasData(l); });
 
-  // --- Edit 2: hold the active lens; rebuild D.series from it, then redraw. ---
-  var current = { lensId: "pop", params: {} };
+  // --- Edit 2: hold the active lens + weights; rebuild D.series, then redraw. ---
+  var current = { lensId: "pop", params: defaultParams(window.LENS_BY_ID.power) };
   function rebuild(animate) {
     if (!available[current.lensId]) return;
-    var widthMode = (typeof mode !== "undefined" && mode === "absolute") ? "absolute" : "share";
-    var series = window.buildSeries(current.lensId, current.params, { widthMode: widthMode });
+    // The metric layer drives width via shares; Demograph's own absolute toggle
+    // stays population-only, so always compute shares here.
+    var series = window.buildSeries(current.lensId, current.params, { widthMode: "share" });
     series.layers.forEach(function (L) {
       var arr = Dh.series[L.id]; if (!arr) return;
-      L.values.forEach(function (v, i) {
-        if (!arr[i]) return;
-        if (widthMode === "absolute") arr[i].pop = v; else arr[i].share = v;
-      });
+      L.values.forEach(function (v, i) { if (arr[i]) arr[i].share = v; });
     });
-    if (widthMode === "share") {
-      var rA = Dh.series[Dh.residual];
-      if (rA) series.residual.forEach(function (v, i) { if (rA[i]) rA[i].share = v; });
-    }
+    // Simple lenses leave an honest "unmapped" residual band; a composite's
+    // shares already fill the column (its residual is a diagnostic, not a band
+    // — engine.js §6), so the band is zeroed to avoid overflowing past 100%.
+    var rA = Dh.series[Dh.residual];
+    var composite = window.LENS_BY_ID[current.lensId].kind === "composite";
+    if (rA) series.residual.forEach(function (v, i) {
+      if (rA[i]) rA[i].share = composite ? 0 : v;
+    });
     if (typeof render === "function") render(!!animate);
   }
   window.rebuildFromLens = rebuild;
 
-  // --- Edit 4: debounce (slider-friendly for the composite lens later). ---
+  // --- Edit 4: debounce the weight sliders. ---
   var raf = null;
   function scheduleRebuild(animate) {
     if (raf) cancelAnimationFrame(raf);
     raf = requestAnimationFrame(function () { raf = null; rebuild(animate); });
   }
 
-  // --- Edit 3: mount the lens selector into the sidebar (.seg/.opt idiom). ---
+  // --- Edit 3: mount the lens selector + composite weights into the sidebar. ---
   var seg = document.getElementById("sb-lens");
   var note = document.getElementById("sb-lens-note");
   if (!seg) return;
@@ -1355,16 +1367,43 @@ document.addEventListener("keydown", ev => {
     o.addEventListener("click", function () { selectLens(lens.id); });
     seg.appendChild(o);
   });
+
+  // composite weight sliders (shown only for the composite lens)
+  var powerLens = window.LENS_BY_ID.power;
+  var weightsBox = document.createElement("div");
+  weightsBox.style.cssText = "margin-top:10px;display:none;";
+  var sliders = {};
+  (powerLens.params || []).forEach(function (spec) {
+    var compAvail = available[powerLens.components.filter(function (c) { return c.weightKey === spec.key; })[0].lensId];
+    var row = document.createElement("label");
+    row.className = "sb-note";
+    row.style.cssText = "display:block;margin:6px 0;" + (compAvail ? "" : "opacity:.4;");
+    var lab = document.createElement("span");
+    lab.textContent = spec.label + (compAvail ? "" : " (no data yet)");
+    var inp = document.createElement("input");
+    inp.type = "range"; inp.min = spec.min; inp.max = spec.max; inp.step = spec.step;
+    inp.value = spec.default; inp.style.cssText = "width:100%;";
+    inp.disabled = !compAvail;
+    inp.addEventListener("input", function () {
+      current.params[spec.key] = +inp.value; scheduleRebuild(false);
+    });
+    row.appendChild(lab); row.appendChild(inp);
+    weightsBox.appendChild(row);
+    sliders[spec.key] = inp;
+  });
+  seg.parentNode.insertBefore(weightsBox, note);
+
   function selectLens(id) {
     if (!available[id]) {
       note.textContent = window.LENS_BY_ID[id].label +
-        " needs territory/economy data — run the pipeline (emit_facts.py).";
+        " needs more data — run the pipeline (pipeline/compute_gdp.py for economy).";
       return;
     }
     current.lensId = id;
     Array.prototype.forEach.call(seg.children, function (o) {
       o.classList.toggle("active", o.dataset.id === id);
     });
+    weightsBox.style.display = (window.LENS_BY_ID[id].kind === "composite") ? "block" : "none";
     note.textContent = window.LENS_BY_ID[id].description || "";
     scheduleRebuild(true);
   }

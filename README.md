@@ -68,12 +68,14 @@ The visualization is a single static page — clone and open
 server.
 
 - [`web/index.html`](web/index.html) — the **real** Demograph renderer over the
-  full historical dataset, now with the metric layer wired in: a "Measure by"
-  selector drives `render()` through the engine. Population is live (it derives
-  its facts from `HISTOMAP_DATA` and reproduces the chart exactly); territory,
-  economy, and relative power are mounted but disabled until the pipeline emits
-  their facts (`web/facts.js`). The seam is reversible — no metric data, no
-  change. See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
+  full historical dataset, with the metric layer wired in: a "Measure by"
+  selector drives `render()` through the engine. **Population**, **territory**,
+  and **relative power** (a population↔territory blend with live weight sliders)
+  are all live; **economy** is mounted but disabled until GDP facts land. Switch
+  to Territory and the Steppe swells while densely-populated regions shrink — the
+  re-measurement the project is about. The seam is reversible — absent
+  `web/facts.js` it falls back to the population-only chart. See
+  [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
 - [`web/preview.html`](web/preview.html) — a **multi-lens prototype** that drives
   the metric layer (population / territory / economy / relative power) over
   illustrative [`web/sample-data.js`](web/sample-data.js). It exists to demo
@@ -94,12 +96,32 @@ python -m venv .venv
 #    download_hyde.py + compute_shares.py  -> population (persons) per polity per slice.
 #    Place Cliopatria & Natural Earth in data/raw/ first.
 
-# 2. This repo's metric-layer pipeline:
-python pipeline/compute_area.py                   # territory (km²) per polity per slice
-python pipeline/compute_gdp.py                    # GDP (Maddison) per polity per slice
-python pipeline/compute_orders.py                 # baked per-lens stacking orders -> web/orders.js
-python pipeline/emit_facts.py                     # -> web/facts.js, web/totals.js, web/polities.js
+# 2. Territory, aligned to Demograph's 262 aggregated streams and emitted as the
+#    metric-layer globals the renderer consumes. Downloads Cliopatria (~44 MB,
+#    ephemeral, gitignored under data/raw/):
+curl -L https://raw.githubusercontent.com/Seshat-Global-History-Databank/cliopatria/main/cliopatria.geojson.zip \
+     -o data/raw/cliopatria.geojson.zip && (cd data/raw && unzip -o cliopatria.geojson.zip)
+python pipeline/align_territory.py   # -> web/polities.js, facts.js, totals.js, orders.js
 ```
+
+`align_territory.py` reproduces `export_web.py`'s raw→stream mapping (prominent
+polities by name; the rest rolled into per-family "Smaller X" bundles via the
+same classifier) so area shares the renderer's keys. It supersedes the flat
+`compute_area.py`/`emit_facts.py` template, which assumed a single `polity_id`
+taxonomy that never reconciled with the aggregated streams.
+
+**Known limits (territory v1):** raw polygon areas are summed without
+exclusive-area overlap resolution, so the per-slice denominator follows the
+mapped total once it exceeds total ice-free land (the residual closes to ~0 in
+the modern era rather than letting shares exceed 100%). All lenses reuse
+Demograph's one wiggle-optimized stacking order — streams re-scale but don't
+re-stack. Both are future refinements (`compute_area.py`'s exclusive-area pass,
+`compute_orders.py`'s per-lens orders).
+
+**Economy (GDP):** still pending — `compute_gdp.py` needs Maddison-derived inputs
+(`maddison_gdppc.csv`, a polity↔country mapping) that aren't vendored and have no
+downloader yet, and `emit_facts.py`/`align_territory.py` would need a `gdp_int_usd`
+column threaded through. The Economy lens stays disabled until then.
 
 ## Data & credits
 
