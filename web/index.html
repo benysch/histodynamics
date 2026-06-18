@@ -19,6 +19,12 @@
   #chart { display: block; margin: 0 auto; }
   .stream { stroke: var(--outline); stroke-width: var(--sw, 0.6); cursor: pointer; }
   .stream:hover { filter: brightness(1.08); }
+  /* robustness ribbon: how much the focused stream's width depends on the
+     weights you chose (min..max envelope), drawn around its stream. */
+  .robust-band { pointer-events: none; }
+  .robust-band-edge { fill: none; pointer-events: none;
+                      stroke: var(--ink); stroke-opacity: 0.28; stroke-width: 0.8;
+                      stroke-dasharray: 2 2; }
   .sep { fill: none; stroke: #fff; stroke-width: 0.3; pointer-events: none; }
   .stream-label, .focus-title {
     font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
@@ -561,7 +567,7 @@ drawFurniture();
 
 const tip = document.getElementById("tip");
 const fmtPct = d3.format(".1%"), fmtPop = d3.format(",.3r");
-const streamG = svg.append("g"), sepG = svg.append("g"),
+const streamG = svg.append("g"), bandG = svg.append("g"), sepG = svg.append("g"),
       eventG = svg.append("g"), labelG = svg.append("g");
 
 // ---- render state -------------------------------------------------------
@@ -984,9 +990,71 @@ function showTip(ev, d) {
     updateMinimap(years[i], d.raw || displayName(d.key));
 }
 
+// --- robustness ribbon (sensitivity commit 14) ---------------------------
+// The one hook docs/INTEGRATION.md / gdp-and-sensitivity.md asks for: when the
+// composite "power" lens is active, draw the min..max share envelope of the
+// polity the sensitivity panel is analysing (the leader at its year) around
+// that polity's stream, so its width-uncertainty sits visible on the chart.
+// The subject + weights come from script #2 via window.robustBandState(); all
+// math stays in window.Sensitivity (no duplication). Cached per subject+weights.
+let lastItems = null;
+const ribbonCache = { key: null, pts: null };
+function robustnessFor(polityId, params) {
+  const key = polityId + "|" + JSON.stringify(params);
+  if (ribbonCache.key !== key) {
+    ribbonCache.key = key;
+    ribbonCache.pts = (window.Sensitivity && window.Sensitivity.robustnessRibbon)
+      ? window.Sensitivity.robustnessRibbon("power", polityId, params, 10) : [];
+  }
+  return ribbonCache.pts;
+}
+function drawRobustnessBand() {
+  if (!bandG) return;
+  bandG.selectAll("*").remove();
+  const st = (typeof window.robustBandState === "function") ? window.robustBandState() : null;
+  if (!st || focus || !lastItems) return;            // main view + power lens only
+  const item = lastItems.find(it => it.key === st.polityId);
+  if (!item) return;
+  const pts = robustnessFor(st.polityId, st.params);
+  if (!pts || !pts.length) return;
+  const by = new Map(pts.map(p => [p.year, p]));
+  const clamp = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  // min/max envelopes centred on the stream's own (moving) centre-line
+  const envelope = which => item.layer.map(d => {
+    const r = by.get(d.data.year);
+    const c = (d[0] + d[1]) / 2;
+    const w = r ? r[which] : (d[1] - d[0]);
+    const p = [clamp(c - w / 2), clamp(c + w / 2)];
+    p.data = d.data;
+    return p;
+  });
+  const area = d3.area()
+    .y(d => yScale(d.data.year))
+    .x0(d => item.xmap(d[0]))
+    .x1(d => item.xmap(d[1]))
+    .curve(d3.curveMonotoneY);
+  const outer = envelope("max"), inner = envelope("min");
+  // outer + inner as one even-odd path => the wobble annulus, stream core shows
+  // through the min-width hole untouched.
+  bandG.append("path").attr("class", "robust-band")
+    .attr("d", area(outer) + area(inner)).attr("fill-rule", "evenodd")
+    .attr("fill", "var(--ink, #3d2f1f)").attr("fill-opacity", 0.13)
+    .attr("stroke", "none");
+  // a faint dashed edge on the max envelope so the upper bound reads even where
+  // it spills over neighbouring streams.
+  bandG.append("path").attr("class", "robust-band-edge")
+    .attr("d", d3.line().x(d => item.xmap(d[0])).y(d => yScale(d.data.year))
+              .curve(d3.curveMonotoneY)(outer));
+  bandG.append("path").attr("class", "robust-band-edge")
+    .attr("d", d3.line().x(d => item.xmap(d[1])).y(d => yScale(d.data.year))
+              .curve(d3.curveMonotoneY)(outer));
+}
+window.refreshRobustBand = drawRobustnessBand;
+
 function render(animate) {
   const items = computeItems();
   const keys = stackKeys();
+  lastItems = items;
   const sel = streamG.selectAll(".stream").data(items, d => d.key);
   const exiting = sel.exit();
   if (animate) exiting.transition().duration(450).attr("opacity", 0).remove();
@@ -1034,6 +1102,7 @@ function render(animate) {
     (animate ? sepM.transition("morph").duration(900) : sepM)
       .attr("d", i => edgePath(byKey.get(keys[i])));
   }
+  drawRobustnessBand();
   const annotate = () => { annotateTimer = null; drawLabels(items); drawEvents(items); buildNavmap(); };
   if (annotateTimer) clearTimeout(annotateTimer);
   if (animate) annotateTimer = setTimeout(annotate, 920);
@@ -1433,7 +1502,15 @@ document.addEventListener("keydown", ev => {
     if (!sens || sensYear == null) return;
     sens.update({ year: sensYear, params: current.params,
                   focusId: leaderAt(current.params, sensYear) });
+    if (typeof window.refreshRobustBand === "function") window.refreshRobustBand();
   }
+  // Subject of the robustness ribbon, read by the renderer (script #1): the
+  // polity the panel is analysing, plus the live weights. null => no band.
+  window.robustBandState = function () {
+    if (!sens || sensYear == null || current.lensId !== "power") return null;
+    var pid = leaderAt(current.params, sensYear);
+    return pid ? { lensId: "power", params: current.params, polityId: pid, year: sensYear } : null;
+  };
   function adoptWeights(params) {                 // user clicked the triangle
     Object.keys(sliders).forEach(function (k) {
       if (params[k] != null) { sliders[k].value = params[k]; current.params[k] = params[k]; }
