@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sensitivity — who leads, by how you define power</title>
+<!--
+  Standalone DEMO of the sensitivity view. The math here mirrors sensitivity.js
+  (blend + argmax over a simplex grid) on mock data so the triangle computes and
+  repaints for real. In the app, delete MOCK + the inline math and call
+  window.Sensitivity.* instead (see sensitivity-panel.js).
+
+  The ternary triangle is the thesis made visible: each interior point is a way
+  of defining "power", colored by who leads under that definition. The steppe
+  owning the Territory corner while China owns the rest is the whole argument —
+  "most powerful" is a function of a choice, and this draws the choice's map.
+-->
+<style>
+  :root {
+    --bg: #ead9bd; --ink: #3d2f1f; --muted: #79633f; --outline: #2e2113;
+    --grid: rgba(61,47,31,0.10); --panel: #f2e6cf;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: Georgia, "Times New Roman", serif;
+    padding: clamp(18px, 4vw, 44px);
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 23px; letter-spacing: 2px; font-weight: normal; margin: 0 0 2px; }
+  .sub { font-family: "Segoe UI", system-ui, sans-serif; font-size: 12.5px;
+         color: var(--muted); line-height: 1.5; margin: 0 0 22px; max-width: 600px; }
+  .grid { display: grid; grid-template-columns: 360px 1fr; gap: 30px; align-items: start; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ternary */
+  .tri-wrap { position: relative; }
+  svg.tri { width: 100%; height: auto; display: block; cursor: crosshair; }
+  .cell { stroke: none; shape-rendering: crispEdges; }
+  .v-label { font-family: "Segoe UI", system-ui, sans-serif; font-size: 11px;
+             letter-spacing: 1.5px; text-transform: uppercase; fill: var(--muted); }
+  .marker { fill: var(--ink); stroke: #fff; stroke-width: 2; }
+  .marker-halo { fill: none; stroke: var(--ink); stroke-width: 1; opacity: .4; }
+  .readout { font-family: "Segoe UI", system-ui, sans-serif; margin-top: 14px; }
+  .readout .big { font-size: 14.5px; line-height: 1.5; }
+  .readout .caveat { font-size: 11.5px; color: #9a5a2e; margin-top: 7px;
+                     display: none; line-height: 1.45; }
+  .legend { font-family: "Segoe UI", system-ui, sans-serif; font-size: 11.5px;
+            margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; color: var(--ink); }
+  .legend .sw { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--outline); }
+
+  /* controls */
+  .ctrl { font-family: "Segoe UI", system-ui, sans-serif; }
+  .sb-label { font: 600 10px "Segoe UI", system-ui, sans-serif; text-transform: uppercase;
+              letter-spacing: 1.6px; color: var(--muted); margin: 0 0 8px; }
+  .sec { border-top: 1px solid var(--grid); margin-top: 16px; padding-top: 14px; }
+  .sec:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .wbar { margin-bottom: 11px; }
+  .wbar .row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
+  .wbar .val { font-variant-numeric: tabular-nums; color: var(--muted); }
+  input[type=range] { width: 100%; accent-color: var(--ink); margin: 0; }
+  .seg { display: flex; border: 1px solid var(--muted); border-radius: 5px; overflow: hidden; }
+  .seg .opt { flex: 1; text-align: center; padding: 6px 4px; cursor: pointer; font-size: 11.5px;
+              color: var(--muted); user-select: none; transition: background .12s, color .12s; }
+  .seg .opt:hover { background: var(--grid); }
+  .seg .opt.active { background: var(--ink); color: var(--bg); font-weight: 600; }
+  .seg .opt + .opt { border-left: 1px solid var(--muted); }
+  select { width: 100%; font: 12.5px "Segoe UI", system-ui, sans-serif; background: var(--panel);
+           color: var(--ink); border: 1px solid var(--muted); border-radius: 5px; padding: 6px; }
+  .bars { margin-top: 4px; }
+  .bar-row { display: grid; grid-template-columns: 70px 1fr 42px; align-items: center; gap: 9px;
+             font-size: 12px; margin-bottom: 6px; }
+  .bar-track { height: 16px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; transition: width .35s cubic-bezier(.2,.7,.2,1); }
+  .bar-val { font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; }
+  .hint { font-size: 11px; color: var(--muted); margin-top: 10px; font-style: italic; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>WHO LEADS</h1>
+  <p class="sub">Every point in the triangle is a way of defining power — a mix of population,
+     territory, and economy. The color is who leads under that definition, in the chosen year.
+     Click anywhere to adopt those weights.</p>
+
+  <div class="grid">
+    <!-- ternary phase diagram -->
+    <div class="tri-wrap">
+      <svg class="tri" viewBox="0 0 320 312" id="tri"></svg>
+      <div class="readout">
+        <div class="big" id="summary"></div>
+        <div class="caveat" id="caveat"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <!-- controls -->
+    <div class="ctrl">
+      <div class="sec">
+        <p class="sb-label">Year</p>
+        <select id="year">
+          <option value="200">200 CE</option>
+          <option value="1000">1000 CE</option>
+          <option value="1700" selected>1700 CE</option>
+        </select>
+      </div>
+      <div class="sec">
+        <p class="sb-label">Weights</p>
+        <div id="weights"></div>
+      </div>
+      <div class="sec">
+        <p class="sb-label">Focus polity</p>
+        <select id="focus"></select>
+      </div>
+      <div class="sec">
+        <p class="sb-label">Ranking at these weights</p>
+        <div class="bars" id="bars"></div>
+      </div>
+      <p class="hint">Drag a weight, or click the triangle, to move the dot.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- mock data: shares per year (pop / area / gdp) ---- */
+  var POL = {
+    china:  { name: "China",  color: "#C94F4F" },
+    india:  { name: "India",  color: "#5BA85B" },
+    europe: { name: "Europe", color: "#4F7FC9" },
+    steppe: { name: "Steppe", color: "#7FA0B0" },
+    persia: { name: "Persia", color: "#9B6FC9" },
+    mideast:{ name: "Mideast",color: "#C98A4F" }
+  };
+  var MOCK = {
+    200:  { china:[.30,.10,.22], europe:[.14,.12,.20], india:[.22,.07,.18],
+            steppe:[.03,.20,.02], persia:[.05,.07,.06], mideast:[.04,.05,.05] },
+    1000: { china:[.25,.09,.24], india:[.22,.07,.20], mideast:[.08,.12,.12],
+            europe:[.12,.08,.10], steppe:[.04,.22,.03], persia:[.05,.06,.05] },
+    1700: { china:[.30,.12,.30], india:[.24,.08,.22], europe:[.14,.07,.18],
+            mideast:[.07,.11,.08], steppe:[.03,.20,.02], persia:[.04,.05,.04] }
+  };
+  var COMP = ["pop", "area", "gdp"];          // barycentric order: P, T, E
+  var LOW_CONF_BEFORE = 1500;                  // GDP confidence floor
+
+  /* ---- blend + leader (mirrors sensitivity.js) ---- */
+  function blend(slice, w) {                   // w = [wPop, wArea, wGdp], sums to 1
+    var out = {}, sum = 0;
+    for (var id in slice) {
+      var s = slice[id];
+      var v = w[0] * s[0] + w[1] * s[1] + w[2] * s[2];
+      out[id] = v; sum += v;
+    }
+    if (sum > 0) for (var p in out) out[p] /= sum;
+    return out;
+  }
+  function leader(slice, w) {
+    var b = blend(slice, w), best = null, bv = -1;
+    for (var p in b) if (b[p] > bv) { bv = b[p]; best = p; }
+    return best;
+  }
+
+  /* ---- ternary geometry ---- */
+  var V0 = [160, 20], V1 = [22, 286], V2 = [298, 286];  // Population, Territory, Economy
+  function cart(b) {
+    return [b[0]*V0[0] + b[1]*V1[0] + b[2]*V2[0],
+            b[0]*V0[1] + b[1]*V1[1] + b[2]*V2[1]];
+  }
+  var R = 24;
+  function latBary(i, j) { return [i/R, j/R, (R - i - j)/R]; }
+
+  /* ---- state ---- */
+  var state = { year: 1700, w: [0.30, 0.35, 0.35], focus: "china" };
+
+  /* ---- build triangle cells (depends on year only) ---- */
+  var tri = document.getElementById("tri");
+  function paintTriangle() {
+    var slice = MOCK[state.year];
+    var ns = "http://www.w3.org/2000/svg";
+    tri.innerHTML = "";
+    for (var i = 0; i < R; i++) {
+      for (var j = 0; i + j < R; j++) {
+        addCell(latBary(i, j), latBary(i+1, j), latBary(i, j+1), slice, ns);
+        if (i + j < R - 1) addCell(latBary(i+1, j), latBary(i, j+1), latBary(i+1, j+1), slice, ns);
+      }
+    }
+    // vertex labels
+    label("Population", V0[0], V0[1] - 7, "middle", ns);
+    label("Territory", V1[0] - 2, V1[1] + 16, "start", ns);
+    label("Economy", V2[0] + 2, V2[1] + 16, "end", ns);
+    drawMarker(ns);
+    paintLegend(slice);
+  }
+  function addCell(a, b, c, slice, ns) {
+    var cen = [(a[0]+b[0]+c[0])/3, (a[1]+b[1]+c[1])/3];
+    var who = leader(slice, cen);
+    var pa = cart(a), pb = cart(b), pc = cart(c);
+    var poly = document.createElementNS(ns, "polygon");
+    poly.setAttribute("class", "cell");
+    poly.setAttribute("points", pa[0]+","+pa[1]+" "+pb[0]+","+pb[1]+" "+pc[0]+","+pc[1]);
+    poly.setAttribute("fill", POL[who] ? POL[who].color : "#ccc");
+    poly.setAttribute("fill-opacity", "0.9");
+    tri.appendChild(poly);
+  }
+  function label(t, x, y, anchor, ns) {
+    var el = document.createElementNS(ns, "text");
+    el.setAttribute("class", "v-label"); el.setAttribute("x", x); el.setAttribute("y", y);
+    el.setAttribute("text-anchor", anchor); el.textContent = t; tri.appendChild(el);
+  }
+  var markerEls = [];
+  function drawMarker(ns) {
+    var p = cart(state.w);
+    var halo = document.createElementNS(ns, "circle");
+    halo.setAttribute("class", "marker-halo"); halo.setAttribute("r", 7);
+    halo.setAttribute("cx", p[0]); halo.setAttribute("cy", p[1]);
+    var dot = document.createElementNS(ns, "circle");
+    dot.setAttribute("class", "marker"); dot.setAttribute("r", 4);
+    dot.setAttribute("cx", p[0]); dot.setAttribute("cy", p[1]);
+    tri.appendChild(halo); tri.appendChild(dot);
+    markerEls = [halo, dot];
+  }
+  function moveMarker() {
+    var p = cart(state.w);
+    markerEls.forEach(function (m) { m.setAttribute("cx", p[0]); m.setAttribute("cy", p[1]); });
+  }
+
+  /* ---- click triangle to set weights (invert via area coords) ---- */
+  tri.addEventListener("click", function (e) {
+    var pt = tri.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    var loc = pt.matrixTransform(tri.getScreenCTM().inverse());
+    var b = bary(loc.x, loc.y);
+    if (b) { state.w = b; refreshWeights(); moveMarker(); renderBars(); renderReadout(); }
+  });
+  function bary(x, y) {                          // cartesian -> barycentric
+    var d = (V1[1]-V2[1])*(V0[0]-V2[0]) + (V2[0]-V1[0])*(V0[1]-V2[1]);
+    var a = ((V1[1]-V2[1])*(x-V2[0]) + (V2[0]-V1[0])*(y-V2[1])) / d;
+    var bb = ((V2[1]-V0[1])*(x-V2[0]) + (V0[0]-V2[0])*(y-V2[1])) / d;
+    var c = 1 - a - bb;
+    if (a < -0.02 || bb < -0.02 || c < -0.02) return null;   // outside triangle
+    a = Math.max(0, a); bb = Math.max(0, bb); c = Math.max(0, c);
+    var s = a + bb + c;
+    return [a/s, bb/s, c/s];
+  }
+
+  /* ---- weight bars (3 sliders, normalized so they sum to 1) ---- */
+  var weightsBox = document.getElementById("weights");
+  var LABELS = ["Population", "Territory", "Economy"];
+  function refreshWeights() {
+    weightsBox.querySelectorAll("input").forEach(function (inp, k) {
+      inp.value = Math.round(state.w[k] * 100);
+      weightsBox.querySelectorAll(".val")[k].textContent = Math.round(state.w[k] * 100) + "%";
+    });
+  }
+  LABELS.forEach(function (lab, k) {
+    var wrap = document.createElement("div"); wrap.className = "wbar";
+    wrap.innerHTML = '<div class="row"><span>' + lab + '</span><span class="val">33%</span></div>';
+    var inp = document.createElement("input");
+    inp.type = "range"; inp.min = 0; inp.max = 100; inp.step = 5;
+    inp.oninput = function () { setWeight(k, +inp.value / 100); };
+    wrap.appendChild(inp); weightsBox.appendChild(wrap);
+  });
+  function setWeight(k, v) {
+    var others = [0,1,2].filter(function (x) { return x !== k; });
+    var rest = 1 - v, osum = state.w[others[0]] + state.w[others[1]];
+    var w = [0,0,0]; w[k] = v;
+    if (osum > 0) { w[others[0]] = rest * state.w[others[0]] / osum; w[others[1]] = rest * state.w[others[1]] / osum; }
+    else { w[others[0]] = w[others[1]] = rest / 2; }
+    state.w = w; refreshWeights(); moveMarker(); renderBars(); renderReadout();
+  }
+
+  /* ---- focus selector ---- */
+  var focusSel = document.getElementById("focus");
+  Object.keys(POL).forEach(function (id) {
+    var o = document.createElement("option"); o.value = id; o.textContent = POL[id].name;
+    focusSel.appendChild(o);
+  });
+  focusSel.value = state.focus;
+  focusSel.onchange = function () { state.focus = focusSel.value; renderReadout(); };
+
+  /* ---- year selector ---- */
+  document.getElementById("year").onchange = function () {
+    state.year = +this.value; paintTriangle(); renderBars(); renderReadout();
+  };
+
+  /* ---- live ranking at current weights ---- */
+  function renderBars() {
+    var b = blend(MOCK[state.year], state.w);
+    var rows = Object.keys(b).map(function (id) { return { id: id, v: b[id] }; })
+                     .sort(function (a, c) { return c.v - a.v; });
+    var max = rows[0].v || 1, box = document.getElementById("bars");
+    box.innerHTML = "";
+    rows.forEach(function (r) {
+      var div = document.createElement("div"); div.className = "bar-row";
+      div.innerHTML = '<div>' + POL[r.id].name + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + (r.v/max*100).toFixed(0) +
+        '%;background:' + POL[r.id].color + '"></div></div>' +
+        '<div class="bar-val">' + (r.v*100).toFixed(0) + '%</div>';
+      box.appendChild(div);
+    });
+  }
+
+  /* ---- readout: how robust is the focus polity's lead? ---- */
+  function renderReadout() {
+    var slice = MOCK[state.year], lead = 0, total = 0;
+    for (var i = 0; i < R; i++) for (var j = 0; i + j < R; j++) {
+      total++; if (leader(slice, latBary(i, j)) === state.focus) lead++;
+    }
+    var pct = Math.round(lead / total * 100), name = POL[state.focus].name;
+    var msg = pct >= 50 ? name + " leads across " + pct + "% of how you could define power."
+            : pct > 0  ? name + " can lead, but only in " + pct + "% of the weight space."
+                       : name + " never leads, however you weight it.";
+    document.getElementById("summary").textContent = msg;
+
+    var cav = document.getElementById("caveat");
+    if (state.year < LOW_CONF_BEFORE && state.w[2] > 0.25) {
+      cav.style.display = "block";
+      cav.textContent = "Economy is weighted " + Math.round(state.w[2]*100) +
+        "% in " + state.year + " CE, where GDP estimates are educated guesses — read this region with care.";
+    } else cav.style.display = "none";
+  }
+
+  /* ---- legend (leaders present this year) ---- */
+  function paintLegend(slice) {
+    var seen = {};
+    for (var i = 0; i < R; i++) for (var j = 0; i + j < R; j++) seen[leader(slice, latBary(i, j))] = 1;
+    var box = document.getElementById("legend"); box.innerHTML = "";
+    Object.keys(seen).forEach(function (id) {
+      var item = document.createElement("div"); item.className = "item";
+      item.innerHTML = '<span class="sw" style="background:' + POL[id].color + '"></span>' + POL[id].name;
+      box.appendChild(item);
+    });
+  }
+
+  /* ---- init ---- */
+  refreshWeights(); paintTriangle(); renderBars(); renderReadout();
+})();
+</script>
+</body>
+</html>

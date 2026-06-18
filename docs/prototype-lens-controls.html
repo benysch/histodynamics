@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lens controls</title>
+<!--
+  Lens selector + composition balance control (v1).
+
+  This is a STANDALONE DEMO so you can feel the UX. The mock compute at the
+  bottom mirrors engine.js so the bars reorder for real as you drag. To wire
+  into the app:
+    1. Delete MOCK + computeBlend; load engine.js + lenses.js instead.
+    2. In emit(), call window.Engine.computeAll(lens, params) and re-render the
+       real stream graph rather than the mock bars.
+    3. Build the segmented control from window.LENSES, and the presets / sliders
+       from the active lens's `params` + `presets`.
+  The control's only output is emit() -> { lensId, params, widthMode }.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink:    #0F1620;
+    --ink-2:  #161F2B;
+    --ink-3:  #1E2A3A;
+    --line:   #2C3A4C;
+    --paper:  #ECE7DA;
+    --muted:  #8A98AA;
+    --brass:  #E0A23C;   /* Population pole */
+    --brass-dim: #6E5526;
+    --teal:   #46B3A6;   /* Territory pole */
+    --teal-dim:  #235049;
+    --display: 'Space Grotesk', system-ui, sans-serif;
+    --mono: 'Space Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(120% 80% at 80% -10%, #16202E 0%, var(--ink) 55%);
+    color: var(--paper);
+    font-family: var(--display);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    padding: clamp(20px, 5vw, 56px);
+  }
+
+  .wrap {
+    max-width: 920px; margin: 0 auto;
+    display: grid; gap: clamp(20px, 4vw, 40px);
+    grid-template-columns: minmax(280px, 360px) 1fr;
+    align-items: start;
+  }
+  @media (max-width: 720px) { .wrap { grid-template-columns: 1fr; } }
+
+  /* ---- control panel ---- */
+  .panel {
+    background: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 22px 24px;
+  }
+  .eyebrow {
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin: 0 0 4px;
+  }
+  .panel h1 {
+    font-size: 19px; font-weight: 600; letter-spacing: -.01em;
+    margin: 0 0 18px;
+  }
+
+  /* ---- segmented lens selector ---- */
+  .seg { display: flex; flex-direction: column; gap: 6px; }
+  .seg-btn {
+    appearance: none; text-align: left; cursor: pointer;
+    background: var(--ink-3); border: 1px solid var(--line);
+    color: var(--paper); font-family: var(--display); font-size: 14px;
+    padding: 11px 14px; border-radius: 9px;
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    transition: border-color .18s, background .18s;
+  }
+  .seg-btn:hover { border-color: #3A4B60; }
+  .seg-btn .sub { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+  .seg-btn[aria-checked="true"] {
+    border-color: var(--brass);
+    box-shadow: inset 0 0 0 1px var(--brass);
+    background: #1B2433;
+  }
+  .seg-btn:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  /* ---- composition (reveals for composite lens) ---- */
+  .comp { margin-top: 20px; }
+  .comp[hidden] { display: none; }
+  .comp-lead {
+    font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 0 14px;
+  }
+  .comp-lead b { color: var(--paper); font-weight: 600; }
+
+  .balance { position: relative; height: 42px; margin: 6px 0 2px; }
+  .balance-track {
+    position: absolute; inset: 14px 2px; border-radius: 999px;
+    border: 1px solid var(--line);
+  }
+  input.range {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    -webkit-appearance: none; appearance: none;
+    background: transparent; margin: 0; cursor: ew-resize;
+  }
+  input.range:focus-visible { outline: none; }
+  input.range:focus-visible + .thumb-ring { opacity: 1; }
+  /* native thumbs */
+  input.range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 10px; height: 38px; border-radius: 6px;
+    background: var(--paper); border: 2px solid var(--ink);
+    box-shadow: 0 2px 8px rgba(0,0,0,.45); cursor: ew-resize;
+  }
+  input.range::-moz-range-thumb {
+    width: 10px; height: 38px; border-radius: 6px;
+    background: var(--paper); border: 2px solid var(--ink); cursor: ew-resize;
+  }
+
+  .poles { display: flex; justify-content: space-between; margin-top: 8px; }
+  .pole { font-size: 11px; letter-spacing: .04em; }
+  .pole .name { text-transform: uppercase; letter-spacing: .14em; }
+  .pole.pop .name { color: var(--brass); }
+  .pole.area .name { color: var(--teal); }
+  .pole .val { font-family: var(--mono); font-size: 15px; display: block; margin-top: 2px; }
+  .pole.area { text-align: right; }
+
+  .presets { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
+  .chip {
+    appearance: none; cursor: pointer; font-family: var(--mono); font-size: 11px;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 11px;
+    transition: color .15s, border-color .15s;
+  }
+  .chip:hover { color: var(--paper); border-color: #3A4B60; }
+  .chip[aria-pressed="true"] { color: var(--ink); background: var(--brass); border-color: var(--brass); }
+  .chip:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  /* ---- width mode ---- */
+  .width { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .width .label { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .toggle { display: flex; gap: 6px; }
+  .toggle button {
+    flex: 1; appearance: none; cursor: pointer; font-family: var(--display); font-size: 13px;
+    background: var(--ink-3); color: var(--paper); border: 1px solid var(--line);
+    padding: 8px; border-radius: 8px; transition: border-color .15s, background .15s;
+  }
+  .toggle button[aria-pressed="true"] { border-color: var(--brass); background: #1B2433; }
+  .toggle button:disabled { opacity: .4; cursor: not-allowed; }
+  .toggle button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+  .width .why { font-size: 11.5px; color: var(--muted); margin-top: 8px; min-height: 1em; line-height: 1.4; }
+
+  /* ---- live mock chart ---- */
+  .stage { padding-top: 4px; }
+  .stage .eyebrow { margin-bottom: 14px; }
+  .bars { display: flex; flex-direction: column; gap: 9px; }
+  .bar-row { display: grid; grid-template-columns: 92px 1fr 52px; align-items: center; gap: 12px; }
+  .bar-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { height: 22px; background: var(--ink-2); border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; transition: width .45s cubic-bezier(.2,.7,.2,1); }
+  .bar-val { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
+  .residual { margin-top: 14px; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .02em; }
+  .residual b { color: #6F7E90; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- ================= CONTROL PANEL ================= -->
+    <section class="panel" aria-label="Metric controls">
+      <p class="eyebrow">Measure by</p>
+      <h1>Which lens sets the widths</h1>
+
+      <div class="seg" role="radiogroup" aria-label="Metric lens" id="seg"></div>
+
+      <div class="comp" id="comp" hidden>
+        <p class="comp-lead">
+          You're defining what <b>power</b> means. Drag to shift where it comes from.
+        </p>
+        <div class="balance">
+          <div class="balance-track" id="track"></div>
+          <input class="range" id="range" type="range" min="0" max="100" step="5" value="50"
+                 aria-label="Power composition: 0 all population, 100 all territory" />
+        </div>
+        <div class="poles">
+          <div class="pole pop"><span class="name">Population</span><span class="val" id="popVal">50%</span></div>
+          <div class="pole area"><span class="name">Territory</span><span class="val" id="areaVal">50%</span></div>
+        </div>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="width">
+        <div class="label">Width shows</div>
+        <div class="toggle" role="group" aria-label="Width mode">
+          <button id="wShare" aria-pressed="true">Share</button>
+          <button id="wAbs" aria-pressed="false">Absolute</button>
+        </div>
+        <p class="why" id="why"></p>
+      </div>
+    </section>
+
+    <!-- ================= LIVE MOCK CHART ================= -->
+    <section class="stage" aria-label="Result preview">
+      <p class="eyebrow">Result &mdash; circa 100&nbsp;CE (mock)</p>
+      <div class="bars" id="bars"></div>
+      <div class="residual" id="resid"></div>
+    </section>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- lens config (in production: window.LENSES) ---- */
+  var LENSES = [
+    { id: "pop",   label: "Population", sub: "share of world pop", kind: "simple", unit: "persons" },
+    { id: "area",  label: "Territory",  sub: "share of land",      kind: "simple", unit: "km\u00B2" },
+    { id: "power", label: "Relative power", sub: "you define it",  kind: "composite",
+      presets: {
+        "Demographic": 0,        // = all population
+        "Balanced": 50,
+        "Sparks-led": 70         // territory-heavy
+      }
+    }
+  ];
+
+  /* ---- mock slice: shares chosen so ranks FLIP between lenses ---- */
+  var MOCK = [
+    { id: "han",     name: "Han China", color: "#C94F4F", pop: 0.28, area: 0.10 },
+    { id: "gupta",   name: "India",     color: "#5BA85B", pop: 0.22, area: 0.08 },
+    { id: "rome",    name: "Rome",      color: "#4F7FC9", pop: 0.14, area: 0.13 },
+    { id: "kushan",  name: "Kushan",    color: "#C98A4F", pop: 0.06, area: 0.05 },
+    { id: "parthia", name: "Parthia",   color: "#9B6FC9", pop: 0.05, area: 0.07 },
+    { id: "steppe",  name: "Steppe",    color: "#7FA0B0", pop: 0.03, area: 0.18 }
+  ];
+
+  /* ---- composite math (mirrors engine.js §4) ---- */
+  function computeBlend(territoryWeight) {
+    var wArea = territoryWeight / 100, wPop = 1 - wArea;
+    var blend = MOCK.map(function (p) {
+      // both components present => simple weighted sum of within-slice shares
+      return { p: p, v: wPop * p.pop + wArea * p.area };
+    });
+    var sum = blend.reduce(function (a, b) { return a + b.v; }, 0);
+    blend.forEach(function (b) { b.share = sum > 0 ? b.v / sum : 0; });
+    // diagnostic residual = weighted blend of each component's unmapped fraction
+    var unPop = 1 - MOCK.reduce(function (a, p) { return a + p.pop; }, 0);
+    var unArea = 1 - MOCK.reduce(function (a, p) { return a + p.area; }, 0);
+    var resid = wPop * unPop + wArea * unArea;
+    blend.sort(function (a, b) { return b.share - a.share; });
+    return { rows: blend, residual: resid };
+  }
+  function computeSimple(key) {
+    var rows = MOCK.map(function (p) { return { p: p, share: p[key] }; });
+    var resid = 1 - MOCK.reduce(function (a, p) { return a + p[key]; }, 0);
+    rows.sort(function (a, b) { return b.share - a.share; });
+    return { rows: rows, residual: resid };
+  }
+
+  /* ---- state ---- */
+  var state = { lensId: "pop", territoryWeight: 50, widthMode: "share" };
+
+  /* ---- build segmented selector ---- */
+  var seg = document.getElementById("seg");
+  LENSES.forEach(function (lens) {
+    var b = document.createElement("button");
+    b.className = "seg-btn"; b.type = "button"; b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", lens.id === state.lensId ? "true" : "false");
+    b.dataset.id = lens.id;
+    b.innerHTML = '<span>' + lens.label + '</span><span class="sub">' + lens.sub + '</span>';
+    b.addEventListener("click", function () { selectLens(lens.id); });
+    seg.appendChild(b);
+  });
+  // arrow-key navigation across the radio group
+  seg.addEventListener("keydown", function (e) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    var i = LENSES.findIndex(function (l) { return l.id === state.lensId; });
+    i = (i + (e.key === "ArrowDown" ? 1 : LENSES.length - 1)) % LENSES.length;
+    selectLens(LENSES[i].id);
+    seg.children[i].focus();
+  });
+
+  /* ---- presets ---- */
+  var presetWrap = document.getElementById("presets");
+  var powerLens = LENSES.find(function (l) { return l.id === "power"; });
+  Object.keys(powerLens.presets).forEach(function (name) {
+    var c = document.createElement("button");
+    c.className = "chip"; c.type = "button"; c.textContent = name;
+    c.dataset.val = powerLens.presets[name];
+    c.setAttribute("aria-pressed", "false");
+    c.addEventListener("click", function () { setBalance(+c.dataset.val); });
+    presetWrap.appendChild(c);
+  });
+
+  /* ---- balance slider ---- */
+  var range = document.getElementById("range");
+  range.addEventListener("input", function () { setBalance(+range.value); });
+
+  /* ---- width toggle ---- */
+  var wShare = document.getElementById("wShare"), wAbs = document.getElementById("wAbs");
+  wShare.addEventListener("click", function () { setWidth("share"); });
+  wAbs.addEventListener("click", function () { setWidth("absolute"); });
+
+  /* ---- actions ---- */
+  function selectLens(id) {
+    state.lensId = id;
+    Array.prototype.forEach.call(seg.children, function (b) {
+      b.setAttribute("aria-checked", b.dataset.id === id ? "true" : "false");
+    });
+    var isComposite = LENSES.find(function (l) { return l.id === id; }).kind === "composite";
+    document.getElementById("comp").hidden = !isComposite;
+    // composite has no unit -> absolute is meaningless (spec §5)
+    wAbs.disabled = isComposite;
+    if (isComposite && state.widthMode === "absolute") setWidth("share");
+    updateWhy();
+    emit();
+  }
+  function setBalance(v) {
+    state.territoryWeight = v;
+    range.value = v;
+    var pop = 100 - v;
+    document.getElementById("popVal").textContent = pop + "%";
+    document.getElementById("areaVal").textContent = v + "%";
+    document.getElementById("track").style.background =
+      "linear-gradient(90deg, var(--brass-dim) 0 " + pop + "%, var(--teal-dim) " + pop + "% 100%)";
+    Array.prototype.forEach.call(presetWrap.children, function (c) {
+      c.setAttribute("aria-pressed", +c.dataset.val === v ? "true" : "false");
+    });
+    emit();
+  }
+  function setWidth(mode) {
+    if (mode === "absolute" && wAbs.disabled) return;
+    state.widthMode = mode;
+    wShare.setAttribute("aria-pressed", mode === "share" ? "true" : "false");
+    wAbs.setAttribute("aria-pressed", mode === "absolute" ? "true" : "false");
+    updateWhy();
+    emit();
+  }
+  function updateWhy() {
+    var why = document.getElementById("why");
+    if (wAbs.disabled) why.textContent = "Absolute needs one unit \u2014 a blend of shares has none.";
+    else if (state.widthMode === "absolute") why.textContent = "Columns grow with the raw total \u2014 the chart flares as population climbs.";
+    else why.textContent = "";
+  }
+
+  /* ---- emit: the control's only output ---- */
+  function emit() {
+    var lens = LENSES.find(function (l) { return l.id === state.lensId; });
+    var params = { wPop: (100 - state.territoryWeight) / 100, wArea: state.territoryWeight / 100 };
+    // In production: window.Engine.computeAll(lens, params) -> re-render stream graph.
+    render(lens);
+    // console.log({ lensId: state.lensId, params: params, widthMode: state.widthMode });
+  }
+
+  /* ---- mock render ---- */
+  function render(lens) {
+    var result = lens.kind === "composite"
+      ? computeBlend(state.territoryWeight)
+      : computeSimple(lens.id);
+    var max = Math.max.apply(null, result.rows.map(function (r) { return r.share; }));
+    var bars = document.getElementById("bars");
+    bars.innerHTML = "";
+    result.rows.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML =
+        '<div class="bar-name">' + r.p.name + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' +
+          (r.share / max * 100).toFixed(1) + '%;background:' + r.p.color + '"></div></div>' +
+        '<div class="bar-val">' + (r.share * 100).toFixed(1) + '%</div>';
+      bars.appendChild(row);
+    });
+    var label = lens.kind === "composite" ? "unmapped (diagnostic)" : "unmapped / stateless";
+    document.getElementById("resid").innerHTML =
+      "<b>" + (result.residual * 100).toFixed(1) + "%</b> &nbsp;" + label;
+  }
+
+  /* ---- init ---- */
+  setBalance(50);
+  selectLens("pop");
+})();
+</script>
+</body>
+</html>

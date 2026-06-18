@@ -1,0 +1,6 @@
+# Metric-layer pipeline. The population pipeline carried over from Demograph
+# may add others (e.g. rasterio for HYDE grids).
+numpy
+pandas
+geopandas
+shapely

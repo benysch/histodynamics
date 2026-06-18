@@ -1,0 +1,45 @@
+Polimetric
+==========
+
+This project reuses code and design from Demograph and is built on the same
+upstream historical datasets. Attribution below is carried forward from
+Demograph's NOTICE and extended.
+
+Everything this project itself creates — code, the visualization, and any
+derived datasets — is offered freely. Choose a project LICENSE (CC0 1.0 matches
+the upstream code and imposes no conditions). Note, however, that some upstream
+DATA sources are licensed CC BY and DO ask for credit even when your own
+additions do not. Please keep the attributions below when you reuse the data.
+
+
+Code & framing
+--------------
+Demograph — https://github.com/alexandrosm/Demograph
+  Dedicated to the public domain under CC0 1.0. Pipeline and D3 rendering reused
+  here; no permission or attribution legally required, credited as good practice.
+
+
+Data sources
+------------
+HYDE 3.2.1 — gridded population reconstruction
+  https://doi.org/10.17026/dans-25g-gez3
+  Licensed CC BY. Credit required on reuse of the data.
+
+Cliopatria (Seshat Global History Databank) — historical border polygons
+  https://github.com/Seshat-Global-History-Databank/cliopatria
+  Licensed CC BY. Credit required on reuse of the data.
+
+Natural Earth — modern country / region boundaries
+  https://www.naturalearthdata.com/
+  Public domain. No attribution required; credited as good practice.
+
+
+Original work referenced
+-------------------------
+John B. Sparks, "Histomap" (1931). Conceptual ancestor only; not reproduced
+here.
+
+
+Raw data is not committed to this repository (see .gitignore). Download HYDE via
+the pipeline and place Cliopatria and Natural Earth in data/raw/ before
+rebuilding. Only processed outputs (data/processed/, web/*.js) are tracked.

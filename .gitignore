@@ -1,0 +1,27 @@
+# --- Python ---
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# --- Raw upstream data (NOT committed; see NOTICE) ---
+# HYDE grids are large and range-fetched; Cliopatria / Natural Earth are vendored locally.
+data/raw/
+*.asc
+*.zip
+*.tif
+*.tiff
+
+# --- Processed outputs ARE tracked (small, derived) ---
+# data/processed/        <- intentionally committed
+# web/*.js               <- emitted facts/totals/polities, committed
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Vercel ---
+.vercel/
