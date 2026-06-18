@@ -132,6 +132,12 @@
   <div class="sb-sub">Four thousand years of world population &mdash; a
   data-driven remake of Sparks's 1931 <em>Histomap</em>.</div>
 
+  <div class="sb-sec" id="sb-lens-sec">
+    <div class="sb-label">Measure by</div>
+    <div class="seg" id="sb-lens"></div>
+    <div class="sb-note" id="sb-lens-note">The metric that sets each stream's width.</div>
+  </div>
+
   <div class="sb-sec">
     <div class="sb-label">Stream width</div>
     <div class="seg" id="sb-width">
@@ -1250,6 +1256,120 @@ sbToggle.onclick = () => {
 document.addEventListener("keydown", ev => {
   if (ev.key === "Escape" && focus) setFocus(null);
 });
+</script>
+
+<!-- ============================================================ -->
+<!-- Metric layer (Polimetric) — the four edits of docs/INTEGRATION.md, -->
+<!-- adapted to this renderer. The seam recomputes D.series shares from   -->
+<!-- the active lens and calls render(); it is fully reversible — if no    -->
+<!-- metric data is derivable, the upstream population chart stands.       -->
+<!-- ============================================================ -->
+<script src="lenses.js"></script>
+<script src="engine.js"></script>
+<script src="order.js"></script>
+<script src="lens-adapter.js"></script>
+<script>
+(function () {
+  "use strict";
+  if (typeof HISTOMAP_DATA === "undefined" || typeof window.buildSeries !== "function") return;
+
+  var Dh = HISTOMAP_DATA;
+  var yrs = Dh.years;
+  var polityKeys = Dh.order.filter(function (k) { return k !== Dh.residual; });
+  function worldAt(i) {
+    return Dh.order.reduce(function (s, k) { return s + (Dh.series[k][i].pop || 0); }, 0);
+  }
+
+  // --- Edit 1 (inverted): derive the engine's globals from HISTOMAP_DATA. ---
+  // Population is the only metric present here; territory & GDP await the
+  // pipeline (pipeline/compute_area.py, compute_gdp.py -> emit_facts.py), so
+  // their lenses are mounted but disabled until web/facts.js carries them.
+  window.POLITIES = polityKeys.map(function (k) {
+    return { id: k, name: k, civ: Dh.regions[k] };
+  });
+  var FACTS = {}, TOTALS = {};
+  yrs.forEach(function (y, i) {
+    var slice = {};
+    polityKeys.forEach(function (k) { slice[k] = { population: Dh.series[k][i].pop || 0 }; });
+    FACTS[String(y)] = slice;
+    TOTALS[String(y)] = { population: worldAt(i) };
+  });
+  window.FACTS = FACTS;
+  window.TOTALS = TOTALS;
+  window.ORDERS = { pop: polityKeys };          // population keeps Demograph's baked order
+  window.ORDER_PRESETS = window.ORDER_PRESETS || {};
+
+  // engine.js binds its default Engine at load (before these globals existed),
+  // so re-create it now that the data is in place.
+  window.Engine = window.createEngine();
+
+  function lensHasData(lens) {
+    if (lens.kind === "composite") {
+      return lens.components.every(function (c) { return lensHasData(window.LENS_BY_ID[c.lensId]); });
+    }
+    var mid = FACTS[String(yrs[Math.floor(yrs.length / 2)])] || {};
+    return polityKeys.some(function (k) { return lens.extract(mid[k]) != null; });
+  }
+  var available = {};
+  window.LENSES.forEach(function (l) { available[l.id] = lensHasData(l); });
+
+  // --- Edit 2: hold the active lens; rebuild D.series from it, then redraw. ---
+  var current = { lensId: "pop", params: {} };
+  function rebuild(animate) {
+    if (!available[current.lensId]) return;
+    var widthMode = (typeof mode !== "undefined" && mode === "absolute") ? "absolute" : "share";
+    var series = window.buildSeries(current.lensId, current.params, { widthMode: widthMode });
+    series.layers.forEach(function (L) {
+      var arr = Dh.series[L.id]; if (!arr) return;
+      L.values.forEach(function (v, i) {
+        if (!arr[i]) return;
+        if (widthMode === "absolute") arr[i].pop = v; else arr[i].share = v;
+      });
+    });
+    if (widthMode === "share") {
+      var rA = Dh.series[Dh.residual];
+      if (rA) series.residual.forEach(function (v, i) { if (rA[i]) rA[i].share = v; });
+    }
+    if (typeof render === "function") render(!!animate);
+  }
+  window.rebuildFromLens = rebuild;
+
+  // --- Edit 4: debounce (slider-friendly for the composite lens later). ---
+  var raf = null;
+  function scheduleRebuild(animate) {
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(function () { raf = null; rebuild(animate); });
+  }
+
+  // --- Edit 3: mount the lens selector into the sidebar (.seg/.opt idiom). ---
+  var seg = document.getElementById("sb-lens");
+  var note = document.getElementById("sb-lens-note");
+  if (!seg) return;
+  window.LENSES.forEach(function (lens) {
+    var o = document.createElement("div");
+    o.className = "opt" + (lens.id === current.lensId ? " active" : "");
+    o.textContent = lens.label;
+    o.title = lens.description || "";
+    o.dataset.id = lens.id;
+    if (!available[lens.id]) { o.style.opacity = ".4"; o.style.cursor = "not-allowed"; }
+    o.addEventListener("click", function () { selectLens(lens.id); });
+    seg.appendChild(o);
+  });
+  function selectLens(id) {
+    if (!available[id]) {
+      note.textContent = window.LENS_BY_ID[id].label +
+        " needs territory/economy data — run the pipeline (emit_facts.py).";
+      return;
+    }
+    current.lensId = id;
+    Array.prototype.forEach.call(seg.children, function (o) {
+      o.classList.toggle("active", o.dataset.id === id);
+    });
+    note.textContent = window.LENS_BY_ID[id].description || "";
+    scheduleRebuild(true);
+  }
+  note.textContent = window.LENS_BY_ID[current.lensId].description || "";
+})();
 </script>
 </body>
 </html>

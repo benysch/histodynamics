@@ -68,7 +68,12 @@ The visualization is a single static page — clone and open
 server.
 
 - [`web/index.html`](web/index.html) — the **real** Demograph renderer over the
-  full historical dataset (population share). The borrowed foundation.
+  full historical dataset, now with the metric layer wired in: a "Measure by"
+  selector drives `render()` through the engine. Population is live (it derives
+  its facts from `HISTOMAP_DATA` and reproduces the chart exactly); territory,
+  economy, and relative power are mounted but disabled until the pipeline emits
+  their facts (`web/facts.js`). The seam is reversible — no metric data, no
+  change. See [`docs/INTEGRATION.md`](docs/INTEGRATION.md).
 - [`web/preview.html`](web/preview.html) — a **multi-lens prototype** that drives
   the metric layer (population / territory / economy / relative power) over
   illustrative [`web/sample-data.js`](web/sample-data.js). It exists to demo
