@@ -138,10 +138,18 @@ the Economy lens degrades toward Population — a true statement about what's
 knowable. Where real figures exist (China from antiquity, Europe from ~1500) it
 diverges sharply: at 2000 the USA is 23% of world GDP but 5% of population.
 
+Each lens also gets its own **wiggle-minimized stacking order** (population keeps
+Demograph's; territory, economy, and each power preset are recomputed in
+`align_territory.py`), so switching lens *re-stacks* the chart rather than only
+re-scaling it — the Steppe rises from the edge to the centre under Territory.
+The composite snaps to its nearest preset's order while you drag (`order.js`),
+so weights only rescale streams between presets.
+
 **Known limits:** the area-weighted population split (vs HYDE-weighted) mainly
 affects multi-country empires in the modern era; raw Cliopatria areas aren't
-overlap-resolved; all lenses reuse Demograph's one stacking order. All are
-future refinements.
+overlap-resolved (per-slice denominator absorbs it); the succession-fidelity
+constraint on stream adjacency (`compute_orders.py`) is skipped. All are future
+refinements.
 
 ## Data & credits
 

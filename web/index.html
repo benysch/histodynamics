@@ -240,7 +240,9 @@ const defs = svg.append("defs");
 const years = D.years;
 
 const GRAY_L = "__statelessL", GRAY_R = "__statelessR";
-const polityKeys = D.order.filter(k => k !== D.residual);
+// `let`, not `const`: the metric layer reorders the stack per lens (the bridge
+// at the end of <body> reassigns this before each render).
+let polityKeys = D.order.filter(k => k !== D.residual);
 const displayName = k => (k === GRAY_L || k === GRAY_R) ? D.residual : k;
 const seriesFor = k => D.series[displayName(k)];
 
@@ -1330,6 +1332,13 @@ document.addEventListener("keydown", ev => {
     // The metric layer drives width via shares; Demograph's own absolute toggle
     // stays population-only, so always compute shares here.
     var series = window.buildSeries(current.lensId, current.params, { widthMode: "share" });
+    // Re-stack: adopt this lens's baked order (order.js snaps the composite to
+    // its nearest preset). polityKeys is the renderer's stacking order; keeping
+    // the same 261-stream set, only the sequence changes. Fall back to the
+    // current order if no baked order exists.
+    if (series.order && series.order.length === polityKeys.length) {
+      polityKeys = series.order.slice();
+    }
     series.layers.forEach(function (L) {
       var arr = Dh.series[L.id]; if (!arr) return;
       L.values.forEach(function (v, i) { if (arr[i]) arr[i].share = v; });

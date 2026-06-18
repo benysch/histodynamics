@@ -34,6 +34,7 @@ import sys
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import pyogrio
 
@@ -57,6 +58,45 @@ BUNDLE_NAMES = {
     "dharmic": "Smaller Indic states", "sinic": "Smaller East Asian states",
     "japan": "Smaller Japanese states",
 }
+
+
+# --- per-lens stacking order (wiggle minimization, ported from
+#     pipeline/compute_orders.py but over the aggregated streams) ------------
+def _wiggle(order, W):
+    cum = np.zeros(W.shape[0]); total = 0.0
+    for idx in order:
+        d = np.diff(cum); total += float(np.dot(d, d)); cum = cum + W[:, idx]
+    return total
+
+
+def _inside_out(W):
+    sums = W.sum(axis=0); idxs = list(np.argsort(-sums))
+    tops, bottoms, ts, bs = [], [], 0.0, 0.0
+    for idx in idxs:
+        if ts < bs: tops.append(idx); ts += sums[idx]
+        else: bottoms.append(idx); bs += sums[idx]
+    return list(reversed(bottoms)) + tops
+
+
+def _optimize(W, max_passes=8):
+    """inside-out start, then local adjacent swaps that lower wiggle."""
+    order = _inside_out(W); best = _wiggle(order, W)
+    for _ in range(max_passes):
+        improved = False
+        for i in range(len(order) - 1):
+            cand = order[:]; cand[i], cand[i + 1] = cand[i + 1], cand[i]
+            c = _wiggle(cand, W)
+            if c < best - 1e-12:
+                order, best, improved = cand, c, True
+        if not improved:
+            break
+    return order
+
+
+def lens_order(streams, share_rows):
+    """share_rows: dict stream -> [share per year]. Returns streams bottom->top."""
+    W = np.array([share_rows[s] for s in streams]).T  # years x streams
+    return [streams[i] for i in _optimize(W)]
 
 
 def load_histomap():
@@ -204,21 +244,54 @@ def main():
         totals[str(y)] = t
     emit_js("TOTALS", totals, WEB / "totals.js")
 
-    # --- emit web/orders.js : reuse Demograph's wiggle-optimized order for every
-    #     lens (streams keep position; widths re-scale per lens). Per-lens baked
-    #     orders are a future refinement (pipeline/compute_orders.py). ---
-    presets = {
-        "Demographic (= Demograph)": 0.0, "Balanced": 0.33,
-        "Sparks-led (territory)": 0.55, "Economic": 0.15,
+    # --- per-lens stacking orders ----------------------------------------
+    # Population keeps Demograph's wiggle-optimized order (streams == D.order);
+    # territory, economy, and each power preset get their own order so the chart
+    # RE-STACKS on lens change, not just re-scales. Presets carry their full
+    # 3-weight blend; order.js snaps to the nearest by territory weight (wArea).
+    ny = len(years)
+    pop_sh  = {s: [pop_series[s][i]["pop"] or 0.0 for i in range(ny)] for s in streams}
+    pden = [sum((pop_series[s][i]["pop"] or 0.0) for s in order) for i in range(ny)]
+    aden = [max(WORLD_LAND_KM2, sum(area[years[i]].values())) for i in range(ny)]
+    gden = [gdp_world[years[i]] for i in range(ny)]
+    pop_sh  = {s: [(pop_series[s][i]["pop"] or 0.0) / pden[i] if pden[i] else 0.0 for i in range(ny)] for s in streams}
+    area_sh = {s: [area[years[i]].get(s, 0.0) / aden[i] if aden[i] else 0.0 for i in range(ny)] for s in streams}
+    gdp_sh  = {s: [gdp[years[i]].get(s, 0.0) / gden[i] if gden[i] else 0.0 for i in range(ny)] for s in streams}
+
+    def blend(wp, wa, wg):
+        """Per-cell weight-renormalized blend over available components, then
+        per-slice normalized to sum 1 (mirrors engine.js compositeSlice)."""
+        rows = {s: [0.0] * ny for s in streams}
+        for i in range(ny):
+            tot = 0.0
+            for s in streams:
+                comps = [(wp, pop_sh[s][i])]              # population: present for all streams
+                if s in area[years[i]]: comps.append((wa, area_sh[s][i]))
+                if s in gdp[years[i]]:  comps.append((wg, gdp_sh[s][i]))
+                wsum = sum(w for w, _ in comps)
+                v = sum(w * sh for w, sh in comps) / wsum if wsum > 0 else 0.0
+                rows[s][i] = v; tot += v
+            if tot > 0:
+                for s in streams: rows[s][i] /= tot
+        return rows
+
+    presets = {  # label -> (wPop, wArea, wGdp); matches web/lenses.js
+        "Demographic (= Demograph)": (1.0, 0.0, 0.0),
+        "Balanced":                  (0.34, 0.33, 0.33),
+        "Sparks-led (territory)":    (0.25, 0.55, 0.20),
+        "Economic":                  (0.25, 0.15, 0.60),
     }
-    orders = {"pop": streams, "area": streams, "gdp": streams}
-    for label in presets:
-        orders[f"power:{label}"] = streams
+    orders = {"pop": streams}                     # keep Demograph's optimized order
+    print("optimizing per-lens orders ...")
+    orders["area"] = lens_order(streams, area_sh)
+    orders["gdp"]  = lens_order(streams, gdp_sh)
+    for label, (wp, wa, wg) in presets.items():
+        orders[f"power:{label}"] = lens_order(streams, blend(wp, wa, wg))
     emit_js("ORDERS", orders, WEB / "orders.js")
-    # ORDER_PRESETS lives in the same file (one extra line)
     with (WEB / "orders.js").open("a", encoding="utf-8") as f:
         f.write("window.ORDER_PRESETS = " +
-                json.dumps({"power": presets}, separators=(",", ":")) + ";\n")
+                json.dumps({"power": {k: v[1] for k, v in presets.items()}},
+                           separators=(",", ":")) + ";\n")
     print("appended window.ORDER_PRESETS")
 
 
