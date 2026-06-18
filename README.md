@@ -67,11 +67,14 @@ The visualization is a single static page — clone and open
 [`web/index.html`](web/index.html), or visit the live demo. No bundler, no
 server.
 
-> **Heads-up:** the page currently loads [`web/sample-data.js`](web/sample-data.js)
-> — illustrative numbers, *not* the historical dataset — so it's live and
-> explorable before the pipeline output lands. A banner says so. Swap that one
-> `<script>` for the emitted `polities.js` / `facts.js` / `totals.js` /
-> `orders.js` and nothing else in `index.html` changes.
+- [`web/index.html`](web/index.html) — the **real** Demograph renderer over the
+  full historical dataset (population share). The borrowed foundation.
+- [`web/preview.html`](web/preview.html) — a **multi-lens prototype** that drives
+  the metric layer (population / territory / economy / relative power) over
+  illustrative [`web/sample-data.js`](web/sample-data.js). It exists to demo
+  lens-switching until the metric layer is wired into the real renderer per
+  [`docs/INTEGRATION.md`](docs/INTEGRATION.md) — a banner makes the distinction
+  clear.
 
 ## Rebuild the data
 
