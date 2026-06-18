@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Demograph — population under each polity</title>
+<title>Histodynamics — a histomap you can re-measure</title>
 <style>
   :root { --bg: #ead9bd; --ink: #3d2f1f; --muted: #79633f; --outline: #2e2113;
           --grid: rgba(61,47,31,0.10); --gray: #cbbfa8; }
@@ -210,9 +210,10 @@
   </div>
 </aside>
 <header>
-  <h1>HISTOMAP&nbsp;2</h1>
-  <p>Four thousand years of world history &mdash; population living under each
-  polity, 2000&nbsp;BCE&ndash;2015&nbsp;CE.</p>
+  <h1>HISTODYNAMICS</h1>
+  <p>Four thousand years of world history &mdash; sized by a metric you choose:
+  population, territory, economy, or a relative-power lens you define.
+  2000&nbsp;BCE&ndash;2015&nbsp;CE.</p>
 </header>
 <svg id="chart"></svg>
 <div id="navmap">
@@ -1374,7 +1375,7 @@ document.addEventListener("keydown", ev => {
 </script>
 
 <!-- ============================================================ -->
-<!-- Metric layer (Polimetric) — the four edits of docs/INTEGRATION.md, -->
+<!-- Metric layer (Histodynamics) — the four edits of docs/INTEGRATION.md, -->
 <!-- adapted to this renderer. The seam recomputes D.series shares from   -->
 <!-- the active lens and calls render(); it is fully reversible — if no    -->
 <!-- metric data is derivable, the upstream population chart stands.       -->

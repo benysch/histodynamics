@@ -1,12 +1,10 @@
-# Polimetric
+# Histodynamics
 
 **A histomap you can re-measure.** Four thousand years of world history as a
 single vertical stream graph — but the *metric* setting the width of each stream
 is a dimension you switch live. Population share, territory share, or a
 **relative power** lens whose definition you set yourself, watching the whole
 chart reorder as you slide the weights.
-
-> Working title — rename throughout before going public if you pick another.
 
 🔗 **Live demo:** _(add your Vercel URL)_ · or open [`web/index.html`](web/index.html) — static, no build step.
 
@@ -20,7 +18,7 @@ of "relative power" — its most-criticized flaw. The brilliant
 **replacing** power with one defensible metric: share of world population under
 each polity.
 
-Polimetric takes the opposite tack on the same critique. Instead of banishing
+Histodynamics takes the opposite tack on the same critique. Instead of banishing
 "relative power," it makes the **metric itself the variable**:
 
 - Power was never undefinable — only *unspecified*. So you specify it.

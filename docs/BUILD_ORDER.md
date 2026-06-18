@@ -8,9 +8,9 @@ the integration that makes it visible. Each commit stands on its own.
 
 ### 1 — Project identity
 `README.md` · `NOTICE` · `LICENSE` · `.gitignore`
-> What this is and what it borrows. Pick the name and find/replace the
-> "Polimetric" placeholder before this commit. Confirm the Demograph author
-> name in README acknowledgements.
+> What this is and what it borrows. The project is named **Histodynamics**
+> (an earlier "Polimetric" placeholder was renamed throughout). Confirm the
+> Demograph author name in README acknowledgements.
 
 ### 2 — Import the foundation (CC0, from Demograph)
 `web/index.html` · `pipeline/download_hyde.py` · `pipeline/compute_shares.py` ·

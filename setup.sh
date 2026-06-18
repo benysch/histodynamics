@@ -102,7 +102,7 @@ MANUAL STEPS (need files not in this snapshot — see docs/BUILD_ORDER.md):
   • Commits 10 / 15 — polish + deploy to Vercel; tag v0.1 then v0.2.
 
 BEFORE PUSHING:
-  • Rename the "Polimetric" placeholder in README.md and NOTICE.
+  • Project name is Histodynamics (the "Polimetric" placeholder was renamed).
   • Confirm the Demograph author name in README acknowledgements.
 ────────────────────────────────────────────────────────────────────────
 NOTE
