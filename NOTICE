@@ -19,6 +19,13 @@ Demograph — https://github.com/alexandrosm/Demograph
   here; no permission or attribution legally required, credited as good practice.
 
 
+Vendored libraries
+------------------
+D3.js v7.9.0 — https://d3js.org  (web/vendor/d3.v7.9.0.min.js)
+  Copyright 2010-2023 Mike Bostock. Licensed ISC. Bundled locally so the page is
+  static and offline-capable rather than depending on a CDN at runtime.
+
+
 Data sources
 ------------
 HYDE 3.2.1 — gridded population reconstruction
@@ -32,6 +39,18 @@ Cliopatria (Seshat Global History Databank) — historical border polygons
 Natural Earth — modern country / region boundaries
   https://www.naturalearthdata.com/
   Public domain. No attribution required; credited as good practice.
+
+Maddison Project Database (MPD 2023) — historical GDP per capita
+  https://www.rug.nl/ggdc/historicaldevelopment/maddison/
+  Used for the economic lens (GDP attribution). Credit requested on reuse.
+
+Clio Infra — historical urbanization ratio
+  https://clio-infra.eu/
+  Used by the (data-gated) structural-complexity lens. Licensed CC BY.
+
+MIT Pantheon 1.0 — globally notable historical figures
+  https://pantheon.world/  ·  kaggle.com/datasets/mit/pantheon-project
+  Used by the (data-gated) cultural-centrality lens. Licensed CC BY-SA.
 
 
 Original work referenced

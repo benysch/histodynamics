@@ -233,7 +233,9 @@
   regions: <a href="https://www.naturalearthdata.com">Natural Earth</a> &middot;
   after John B. Sparks, <em>The Histomap</em> (1931)
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<!-- d3 v7 vendored locally so the page is truly static / offline-capable
+     (no CDN dependency). BSD-3-Clause, see NOTICE. -->
+<script src="vendor/d3.v7.9.0.min.js"></script>
 <script src="data.js"></script>
 <script src="regions.js"></script>
 <script src="events.js"></script>
