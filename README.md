@@ -110,6 +110,13 @@ same classifier) so area shares the renderer's keys. It supersedes the flat
 `compute_area.py`/`emit_facts.py` template, which assumed a single `polity_id`
 taxonomy that never reconciled with the aggregated streams.
 
+Area is **exclusive** (overlaps resolved): polygons are rasterized largest-first
+onto an equal-area grid (EPSG:6933, 5 km) so a contested cell counts once, for
+the smallest polity covering it — `compute_area.py`'s smaller-wins rule, done on
+a grid (needs `rasterio`). Removing double-counts drops average mapped land from
+33.6M to 29.7M km²/slice; the modern world reaches ~135M km² (most land is in
+states), so the per-slice denominator still tracks the mapped total there.
+
 `align_territory.py` also threads in GDP (step 3) when `gdp_intusd.csv` exists,
 emitting `facts.js` with population + territory + economy in one pass.
 
@@ -145,11 +152,11 @@ re-scaling it — the Steppe rises from the edge to the centre under Territory.
 The composite snaps to its nearest preset's order while you drag (`order.js`),
 so weights only rescale streams between presets.
 
-**Known limits:** the area-weighted population split (vs HYDE-weighted) mainly
-affects multi-country empires in the modern era; raw Cliopatria areas aren't
-overlap-resolved (per-slice denominator absorbs it); the succession-fidelity
-constraint on stream adjacency (`compute_orders.py`) is skipped. All are future
-refinements.
+**Known limits:** the area-weighted GDP population split (vs HYDE-weighted)
+mainly affects multi-country empires in the modern era; exclusive area is
+grid-resolved at 5 km, so polities smaller than a few cells are undercounted;
+the succession-fidelity constraint on stream adjacency (`compute_orders.py`) is
+skipped. All are future refinements.
 
 ## Data & credits
 

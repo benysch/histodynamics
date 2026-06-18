@@ -49,6 +49,7 @@ FP_JSON = ROOT / "data" / "raw" / "wikidata_fingerprint.json"
 WEB = ROOT / "web"
 
 WORLD_LAND_KM2 = 104_000_000.0  # matches pipeline/emit_facts.py
+EQUAL_AREA = "EPSG:6933"         # World Cylindrical Equal Area (metres)
 
 BUNDLE_NAMES = {
     "classical": "Smaller classical states", "americas": "Smaller American states",
@@ -97,6 +98,47 @@ def lens_order(streams, share_rows):
     """share_rows: dict stream -> [share per year]. Returns streams bottom->top."""
     W = np.array([share_rows[s] for s in streams]).T  # years x streams
     return [streams[i] for i in _optimize(W)]
+
+
+def exclusive_area(years, name_to_stream, res_m=5000):
+    """Exclusive km^2 per stream per slice, overlaps resolved smaller-wins, via
+    equal-area rasterization (EPSG:6933). Polygons are painted largest-first so
+    smaller polities overwrite and every cell is counted once for the smallest
+    polity covering it -- the vector difference in compute_area.py, done on a
+    grid (fast, and how the population pipeline assigns cells too)."""
+    from rasterio import features
+    from rasterio.transform import from_origin
+
+    # EPSG:6933 world extent (metres)
+    XMIN, XMAX, YMIN, YMAX = -17367530.45, 17367530.45, -7314540.83, 7314540.83
+    cols = int(round((XMAX - XMIN) / res_m))
+    rows = int(round((YMAX - YMIN) / res_m))
+    transform = from_origin(XMIN, YMAX, res_m, res_m)
+    cell_km2 = (res_m * res_m) / 1e6
+    print(f"rasterizing exclusive area at {res_m/1000:.0f} km ({cols}x{rows}) ...")
+
+    g = gpd.read_file(CLIO)
+    g = g[g["Type"] == "POLITY"][["Name", "FromYear", "ToYear", "Area", "geometry"]]
+    g = g.to_crs(EQUAL_AREA)
+
+    area = {y: {} for y in years}
+    for y in years:
+        sl = g[(g.FromYear <= y) & (g.ToYear >= y)]
+        if sl.empty:
+            continue
+        sl = sl.sort_values("Area", ascending=False)        # largest first -> smaller wins
+        names = sl.Name.tolist()
+        shapes = ((geom, i + 1) for i, geom in enumerate(sl.geometry.values))
+        arr = features.rasterize(shapes, out_shape=(rows, cols), transform=transform,
+                                 fill=0, dtype="int32", all_touched=False)
+        counts = np.bincount(arr.ravel())
+        for i, name in enumerate(names):
+            v = i + 1
+            if v < len(counts) and counts[v]:
+                stream = name_to_stream.get(name)
+                if stream is not None:
+                    area[y][stream] = area[y].get(stream, 0.0) + counts[v] * cell_km2
+    return area
 
 
 def load_histomap():
@@ -169,17 +211,8 @@ def main():
         if bundle in kept:
             name_to_stream[name] = bundle          # sub-threshold: family bundle
 
-    # --- area per stream per slice year ---
-    # one polity has at most one interval covering a given year; sum per stream
-    area = {y: {} for y in years}
-    rows = clio[["Name", "FromYear", "ToYear", "Area"]].itertuples(index=False)
-    for name, fy, ty, a in rows:
-        stream = name_to_stream.get(name)
-        if stream is None or not (a and a > 0):
-            continue
-        for y in years:
-            if fy <= y <= ty:
-                area[y][stream] = area[y].get(stream, 0.0) + float(a)
+    # --- exclusive area per stream per slice year (overlaps resolved) ---
+    area = exclusive_area(years, name_to_stream)
 
     mapped_avg = sum(sum(area[y].values()) for y in years) / len(years)
     print(f"avg mapped land per slice: {mapped_avg/1e6:.1f}M km^2 "
