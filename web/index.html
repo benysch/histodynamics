@@ -754,9 +754,9 @@ function drawLabels(items) {
     }
     if (best < 0) continue;
     const laneW = item.xmap(layer[best][1]) - item.xmap(layer[best][0]);
-    if (laneW < 18) continue;
+    if (laneW < 24) continue;                 // label only streams with room
     const text = item.name || displayName(item.key);
-    const size = laneW > 72 ? 12.5 : 10.5;
+    const size = laneW > 72 ? 13.5 : 11.5;    // larger, more legible
     const lineH = size + 2;
     // Greedy-wrap to the lane width using MEASURED text widths (max 4 lines).
     const lines = [];
@@ -768,7 +768,7 @@ function drawLabels(items) {
     }
     lines.push(cur);
     const wmax = Math.max(...lines.map(l => textW(l, size)));
-    if (lines.length > 4 || wmax > laneW - 3) continue;
+    if (lines.length > 3 || wmax > laneW - 3) continue;   // cap at 3 lines, less cramped
     const cx = item.xmap((layer[best][0] + layer[best][1]) / 2);
     if (cx < M.left || cx > W - M.right) continue;  // skip off-screen parted streams
     const cy = yScale(layer[best].data.year) - ((lines.length - 1) * lineH) / 2 + 3;
@@ -847,7 +847,7 @@ function placeEvent(e, item) {
 
   let placed = null;
   outer:
-  for (const size of (e.importance >= 3 ? [9.5, 8.5] : [8.5, 7.5])) {
+  for (const size of (e.importance >= 3 ? [10.5, 9.5] : [9.5, 8.5])) {
     const lineH = size + 1.5;
     for (const nLines of [1, 2, 3]) {
       const words = e.text.split(/\s+/);
@@ -886,7 +886,7 @@ function placeEvent(e, item) {
   }
   // Vertical along narrow streams (the original's trick).
   let vert = null;
-  for (const size of [8.5, 7.5]) {
+  for (const size of [9.5, 8.5]) {
     const len = textW(e.text, size);
     for (const dy of [0, -24, 24, -52, 52, -84, 84]) {
       const y = y0 + dy;
