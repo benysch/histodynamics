@@ -2,7 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Demograph — population under each polity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Histodynamics — a histomap you can re-measure</title>
+<meta name="description" content="Four thousand years of world history as one vertical stream graph — switch the metric live between population, territory, economy, or a relative-power blend whose weights you set, and watch the chart re-rank." />
+<meta name="theme-color" content="#ead9bd" />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://histodynamics.vercel.app" />
+<meta property="og:title" content="Histodynamics — a histomap you can re-measure" />
+<meta property="og:description" content="A histomap whose 'relative power' metric is a dial you control: blend population, territory, and economy and watch civilizations trade places." />
+<meta property="og:image" content="https://histodynamics.vercel.app/og-cover.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Histodynamics — a re-measurable histomap of world history." />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Histodynamics — a histomap you can re-measure" />
+<meta name="twitter:description" content="Switch the metric live — population, territory, economy, or a relative-power blend you define — and watch the streams re-rank." />
+<meta name="twitter:image" content="https://histodynamics.vercel.app/og-cover.png" />
 <style>
   :root { --bg: #ead9bd; --ink: #3d2f1f; --muted: #79633f; --outline: #2e2113;
           --grid: rgba(61,47,31,0.10); --gray: #cbbfa8; }
@@ -19,6 +36,12 @@
   #chart { display: block; margin: 0 auto; }
   .stream { stroke: var(--outline); stroke-width: var(--sw, 0.6); cursor: pointer; }
   .stream:hover { filter: brightness(1.08); }
+  /* robustness ribbon: how much the focused stream's width depends on the
+     weights you chose (min..max envelope), drawn around its stream. */
+  .robust-band { pointer-events: none; }
+  .robust-band-edge { fill: none; pointer-events: none;
+                      stroke: var(--ink); stroke-opacity: 0.28; stroke-width: 0.8;
+                      stroke-dasharray: 2 2; }
   .sep { fill: none; stroke: #fff; stroke-width: 0.3; pointer-events: none; }
   .stream-label, .focus-title {
     font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
@@ -43,6 +66,8 @@
          font: 12.5px/1.45 "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
          box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
   #tip .fam { color: #b3a888; font-size: 11.5px; }
+  #tip .tip-est { color: #c9b98f; font-size: 11.5px; }
+  #tip .tip-warn { color: #e0a36a; font-size: 11.5px; }
   footer { text-align: center; font-size: 11.5px; color: var(--muted);
            padding: 12px 16px 28px; }
   footer a { color: inherit; }
@@ -202,9 +227,10 @@
   </div>
 </aside>
 <header>
-  <h1>HISTOMAP&nbsp;2</h1>
-  <p>Four thousand years of world history &mdash; population living under each
-  polity, 2000&nbsp;BCE&ndash;2015&nbsp;CE.</p>
+  <h1>HISTODYNAMICS</h1>
+  <p>Four thousand years of world history &mdash; sized by a metric you choose:
+  population, territory, economy, or a relative-power lens you define.
+  2000&nbsp;BCE&ndash;2015&nbsp;CE.</p>
 </header>
 <svg id="chart"></svg>
 <div id="navmap">
@@ -225,7 +251,9 @@
   regions: <a href="https://www.naturalearthdata.com">Natural Earth</a> &middot;
   after John B. Sparks, <em>The Histomap</em> (1931)
 </footer>
-<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<!-- d3 v7 vendored locally so the page is truly static / offline-capable
+     (no CDN dependency). BSD-3-Clause, see NOTICE. -->
+<script src="vendor/d3.v7.9.0.min.js"></script>
 <script src="data.js"></script>
 <script src="regions.js"></script>
 <script src="events.js"></script>
@@ -560,8 +588,8 @@ function drawFurniture() {
 drawFurniture();
 
 const tip = document.getElementById("tip");
-const fmtPct = d3.format(".1%"), fmtPop = d3.format(",.3r");
-const streamG = svg.append("g"), sepG = svg.append("g"),
+const fmtPct = d3.format(".1%"), fmtPop = d3.format(",.3r"), fmtSI = d3.format(".2s");
+const streamG = svg.append("g"), bandG = svg.append("g"), sepG = svg.append("g"),
       eventG = svg.append("g"), labelG = svg.append("g");
 
 // ---- render state -------------------------------------------------------
@@ -743,9 +771,9 @@ function drawLabels(items) {
     }
     if (best < 0) continue;
     const laneW = item.xmap(layer[best][1]) - item.xmap(layer[best][0]);
-    if (laneW < 18) continue;
+    if (laneW < 24) continue;                 // label only streams with room
     const text = item.name || displayName(item.key);
-    const size = laneW > 72 ? 12.5 : 10.5;
+    const size = laneW > 72 ? 13.5 : 11.5;    // larger, more legible
     const lineH = size + 2;
     // Greedy-wrap to the lane width using MEASURED text widths (max 4 lines).
     const lines = [];
@@ -757,7 +785,7 @@ function drawLabels(items) {
     }
     lines.push(cur);
     const wmax = Math.max(...lines.map(l => textW(l, size)));
-    if (lines.length > 4 || wmax > laneW - 3) continue;
+    if (lines.length > 3 || wmax > laneW - 3) continue;   // cap at 3 lines, less cramped
     const cx = item.xmap((layer[best][0] + layer[best][1]) / 2);
     if (cx < M.left || cx > W - M.right) continue;  // skip off-screen parted streams
     const cy = yScale(layer[best].data.year) - ((lines.length - 1) * lineH) / 2 + 3;
@@ -836,7 +864,7 @@ function placeEvent(e, item) {
 
   let placed = null;
   outer:
-  for (const size of (e.importance >= 3 ? [9.5, 8.5] : [8.5, 7.5])) {
+  for (const size of (e.importance >= 3 ? [10.5, 9.5] : [9.5, 8.5])) {
     const lineH = size + 1.5;
     for (const nLines of [1, 2, 3]) {
       const words = e.text.split(/\s+/);
@@ -875,7 +903,7 @@ function placeEvent(e, item) {
   }
   // Vertical along narrow streams (the original's trick).
   let vert = null;
-  for (const size of [8.5, 7.5]) {
+  for (const size of [9.5, 8.5]) {
     const len = textW(e.text, size);
     for (const dy of [0, -24, 24, -52, 52, -84, 84]) {
       const y = y0 + dy;
@@ -953,6 +981,47 @@ function drawEvents(items) {
   }
 }
 
+// The body line(s) of a stream tooltip, honest to the active lens: width means
+// share of GDP / land / population depending on what you're measuring, with the
+// GDP estimate fraction and a pre-1500 "educated guess" note (BUILD_ORDER §15).
+function lensTipBody(key, yr, s, yearTxt) {
+  const lensId = (window.ACTIVE_LENS && window.ACTIVE_LENS.id) || "pop";
+  const params = (window.ACTIVE_LENS && window.ACTIVE_LENS.params) || {};
+  const slice = window.FACTS && window.FACTS[String(yr)];
+  const f = (slice && slice[key]) || {};
+  const pct = fmtPct(s.share);
+  if (lensId === "area") {
+    return `${yearTxt}: ${pct} of mapped land` +
+      (f.area_km2 != null ? `<br>(~${fmtSI(f.area_km2)} km²)` : "");
+  }
+  if (lensId === "urban") {
+    return `${yearTxt}: ${pct} of world urban population` +
+      (f.urban_pop != null ? `<br>(~${fmtSI(f.urban_pop)} urban people)` : "");
+  }
+  if (lensId === "culture") {
+    return `${yearTxt}: ${pct} of translated historical figures` +
+      (f.cultural_figures != null ? `<br>(~${Math.round(f.cultural_figures)} figures)` : "");
+  }
+  if (lensId === "gdp") {
+    let out = `${yearTxt}: ${pct} of world GDP` +
+      (f.gdp_int_usd != null ? `<br>(~int$${fmtSI(f.gdp_int_usd)})` : "");
+    const em = window.GDP_EST && window.GDP_EST[String(yr)];
+    const ef = em && em[key];
+    if (ef != null) out += `<br><span class="tip-est">~${Math.round(ef * 100)}% of this GDP is estimated</span>`;
+    if (yr < 1500) out += `<br><span class="tip-warn">GDP is an educated guess before ~1500</span>`;
+    return out;
+  }
+  if (lensId === "power") {
+    const a = params.wPop || 0, b = params.wArea || 0, c = params.wGdp || 0, t = a + b + c || 1;
+    let out = `${yearTxt}: ${pct} relative power` +
+      `<br><span class="fam">Pop ${Math.round(a/t*100)}% · Terr ${Math.round(b/t*100)}% · Econ ${Math.round(c/t*100)}%</span>`;
+    if (window.Sensitivity && window.Sensitivity.lowConfidence("power", params, yr))
+      out += `<br><span class="tip-warn">economy weighted heavily pre-1500 — read with care</span>`;
+    return out;
+  }
+  return `${yearTxt}: ${pct} of world population<br>(~${fmtPop(s.pop)} people)`;
+}
+
 function showTip(ev, d) {
   const year = Math.round(yScale.invert(d3.pointer(ev, svg.node())[1]));
   const i = d3.bisectCenter(years, year);
@@ -973,8 +1042,7 @@ function showTip(ev, d) {
     const sub = (D.subfamilies || {})[name];
     const famLine = fam ? `<br><span class="fam">${FAMILY_LABEL[fam] || fam}${
       sub && !["bundle", "geo", "unknown", "colonial", "unrecorded"].includes(sub) ? " · " + sub : ""}</span>` : "";
-    html = `<b>${name}</b>${famLine}<br>${yearTxt}:
-      ${fmtPct(s.share)} of world population<br>(~${fmtPop(s.pop)} people)`;
+    html = `<b>${name}</b>${famLine}<br>` + lensTipBody(d.key, years[i], s, yearTxt);
   }
   tip.style.display = "block";
   tip.style.left = (ev.clientX + 14) + "px";
@@ -984,9 +1052,71 @@ function showTip(ev, d) {
     updateMinimap(years[i], d.raw || displayName(d.key));
 }
 
+// --- robustness ribbon (sensitivity commit 14) ---------------------------
+// The one hook docs/INTEGRATION.md / gdp-and-sensitivity.md asks for: when the
+// composite "power" lens is active, draw the min..max share envelope of the
+// polity the sensitivity panel is analysing (the leader at its year) around
+// that polity's stream, so its width-uncertainty sits visible on the chart.
+// The subject + weights come from script #2 via window.robustBandState(); all
+// math stays in window.Sensitivity (no duplication). Cached per subject+weights.
+let lastItems = null;
+const ribbonCache = { key: null, pts: null };
+function robustnessFor(polityId, params) {
+  const key = polityId + "|" + JSON.stringify(params);
+  if (ribbonCache.key !== key) {
+    ribbonCache.key = key;
+    ribbonCache.pts = (window.Sensitivity && window.Sensitivity.robustnessRibbon)
+      ? window.Sensitivity.robustnessRibbon("power", polityId, params, 10) : [];
+  }
+  return ribbonCache.pts;
+}
+function drawRobustnessBand() {
+  if (!bandG) return;
+  bandG.selectAll("*").remove();
+  const st = (typeof window.robustBandState === "function") ? window.robustBandState() : null;
+  if (!st || focus || !lastItems) return;            // main view + power lens only
+  const item = lastItems.find(it => it.key === st.polityId);
+  if (!item) return;
+  const pts = robustnessFor(st.polityId, st.params);
+  if (!pts || !pts.length) return;
+  const by = new Map(pts.map(p => [p.year, p]));
+  const clamp = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  // min/max envelopes centred on the stream's own (moving) centre-line
+  const envelope = which => item.layer.map(d => {
+    const r = by.get(d.data.year);
+    const c = (d[0] + d[1]) / 2;
+    const w = r ? r[which] : (d[1] - d[0]);
+    const p = [clamp(c - w / 2), clamp(c + w / 2)];
+    p.data = d.data;
+    return p;
+  });
+  const area = d3.area()
+    .y(d => yScale(d.data.year))
+    .x0(d => item.xmap(d[0]))
+    .x1(d => item.xmap(d[1]))
+    .curve(d3.curveMonotoneY);
+  const outer = envelope("max"), inner = envelope("min");
+  // outer + inner as one even-odd path => the wobble annulus, stream core shows
+  // through the min-width hole untouched.
+  bandG.append("path").attr("class", "robust-band")
+    .attr("d", area(outer) + area(inner)).attr("fill-rule", "evenodd")
+    .attr("fill", "var(--ink, #3d2f1f)").attr("fill-opacity", 0.13)
+    .attr("stroke", "none");
+  // a faint dashed edge on the max envelope so the upper bound reads even where
+  // it spills over neighbouring streams.
+  bandG.append("path").attr("class", "robust-band-edge")
+    .attr("d", d3.line().x(d => item.xmap(d[0])).y(d => yScale(d.data.year))
+              .curve(d3.curveMonotoneY)(outer));
+  bandG.append("path").attr("class", "robust-band-edge")
+    .attr("d", d3.line().x(d => item.xmap(d[1])).y(d => yScale(d.data.year))
+              .curve(d3.curveMonotoneY)(outer));
+}
+window.refreshRobustBand = drawRobustnessBand;
+
 function render(animate) {
   const items = computeItems();
   const keys = stackKeys();
+  lastItems = items;
   const sel = streamG.selectAll(".stream").data(items, d => d.key);
   const exiting = sel.exit();
   if (animate) exiting.transition().duration(450).attr("opacity", 0).remove();
@@ -1034,6 +1164,7 @@ function render(animate) {
     (animate ? sepM.transition("morph").duration(900) : sepM)
       .attr("d", i => edgePath(byKey.get(keys[i])));
   }
+  drawRobustnessBand();
   const annotate = () => { annotateTimer = null; drawLabels(items); drawEvents(items); buildNavmap(); };
   if (annotateTimer) clearTimeout(annotateTimer);
   if (animate) annotateTimer = setTimeout(annotate, 920);
@@ -1261,7 +1392,7 @@ document.addEventListener("keydown", ev => {
 </script>
 
 <!-- ============================================================ -->
-<!-- Metric layer (Polimetric) — the four edits of docs/INTEGRATION.md, -->
+<!-- Metric layer (Histodynamics) — the four edits of docs/INTEGRATION.md, -->
 <!-- adapted to this renderer. The seam recomputes D.series shares from   -->
 <!-- the active lens and calls render(); it is fully reversible — if no    -->
 <!-- metric data is derivable, the upstream population chart stands.       -->
@@ -1271,6 +1402,7 @@ document.addEventListener("keydown", ev => {
 <script src="polities.js"></script>
 <script src="facts.js"></script>
 <script src="totals.js"></script>
+<script src="gdp_meta.js"></script>
 <script src="orders.js"></script>
 <script src="lenses.js"></script>
 <script src="engine.js"></script>
@@ -1291,7 +1423,7 @@ document.addEventListener("keydown", ev => {
   }
 
   // --- Edit 1: the engine's globals. Prefer the emitted files (population +
-  // territory, keyed by the same 262 streams); else derive population only from
+  // territory, keyed by the same 261 streams); else derive population only from
   // HISTOMAP_DATA so the page still works. ---
   if (!window.FACTS) {
     window.POLITIES = polityKeys.map(function (k) { return { id: k, name: k, civ: Dh.regions[k] }; });
@@ -1332,6 +1464,9 @@ document.addEventListener("keydown", ev => {
   var sens = null, sensYear = null;   // sensitivity panel (mounted below)
   function rebuild(animate) {
     if (!available[current.lensId]) return;
+    // Publish the active lens so the renderer's tooltip (script #1) can label
+    // the width honestly per lens (share of GDP / land / population).
+    window.ACTIVE_LENS = { id: current.lensId, params: current.params };
     // The metric layer drives width via shares; Demograph's own absolute toggle
     // stays population-only, so always compute shares here.
     var series = window.buildSeries(current.lensId, current.params, { widthMode: "share" });
@@ -1425,15 +1560,23 @@ document.addEventListener("keydown", ev => {
   // --- sensitivity: ternary "who leads" phase diagram (commit 13) ----------
   function leaderAt(params, year) {
     var sh = window.Engine.computeSlice(window.LENS_BY_ID.power, year, params).shares;
-    var best = null, bv = -Infinity;
-    for (var p in sh) if (sh[p] > bv) { bv = sh[p]; best = p; }
-    return best;
+    // top non-aggregate polity — matches the phase diagram / robustness panel,
+    // so the on-chart band tracks the same leader (sensitivity.js leaderOf).
+    return window.Sensitivity.leaderOf(sh);
   }
   function updateSensitivity() {
     if (!sens || sensYear == null) return;
     sens.update({ year: sensYear, params: current.params,
                   focusId: leaderAt(current.params, sensYear) });
+    if (typeof window.refreshRobustBand === "function") window.refreshRobustBand();
   }
+  // Subject of the robustness ribbon, read by the renderer (script #1): the
+  // polity the panel is analysing, plus the live weights. null => no band.
+  window.robustBandState = function () {
+    if (!sens || sensYear == null || current.lensId !== "power") return null;
+    var pid = leaderAt(current.params, sensYear);
+    return pid ? { lensId: "power", params: current.params, polityId: pid, year: sensYear } : null;
+  };
   function adoptWeights(params) {                 // user clicked the triangle
     Object.keys(sliders).forEach(function (k) {
       if (params[k] != null) { sliders[k].value = params[k]; current.params[k] = params[k]; }

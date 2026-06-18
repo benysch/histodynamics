@@ -1,0 +1,30 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # No dependencies: the web modules are plain browser globals and the tests
+      # use Node's built-in runner. See tests/metric-layer.test.js.
+      - run: node --test
+
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # Only the order-fidelity core is tested here (numpy + pandas), not the
+      # full geo pipeline. See tests/test_succession.py.
+      - run: pip install numpy pandas
+      - run: python -m unittest discover -s tests -p "test_*.py"

@@ -7,7 +7,9 @@ __pycache__/
 
 # --- Raw upstream data (NOT committed; see NOTICE) ---
 # HYDE grids are large and range-fetched; Cliopatria / Natural Earth are vendored locally.
-data/raw/
+# The folder's README (what to stage) IS tracked; the data itself is not.
+data/raw/*
+!data/raw/README.md
 *.asc
 *.zip
 *.tif

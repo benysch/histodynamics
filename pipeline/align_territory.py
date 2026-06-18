@@ -7,7 +7,7 @@ metric layer's data globals (web/polities.js, facts.js, totals.js, orders.js).
 Why this exists
 ---------------
 The vendored compute_area.py / emit_facts.py assume a flat `polity_id` taxonomy,
-but Demograph's renderer (HISTOMAP_DATA) uses 262 *aggregated* streams: prominent
+but Demograph's renderer (HISTOMAP_DATA) uses 261 *aggregated* streams: prominent
 polities kept by name, sub-threshold ones rolled into per-family "Smaller X"
 bundles, plus population-only "Unrecorded X" overlays and a residual. To make a
 territory lens line up with that renderer, area must be keyed by those same
@@ -38,12 +38,15 @@ import numpy as np
 import pandas as pd
 import pyogrio
 
+import succession   # shared wiggle + succession-fidelity ordering core
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "pipeline"))
 
 CLIO = ROOT / "data" / "raw" / "cliopatria_polities_only.geojson"
 POP_SHARES = ROOT / "data" / "processed" / "population_shares.csv"
 GDP_CSV = ROOT / "data" / "processed" / "gdp_intusd.csv"   # optional (pipeline/compute_gdp.py)
+VEC_DIR = ROOT / "data" / "processed" / "vectors"          # optional extra dimensions (one CSV per fact)
 DATA_JS = ROOT / "web" / "data.js"
 FP_JSON = ROOT / "data" / "raw" / "wikidata_fingerprint.json"
 WEB = ROOT / "web"
@@ -61,43 +64,33 @@ BUNDLE_NAMES = {
 }
 
 
-# --- per-lens stacking order (wiggle minimization, ported from
-#     pipeline/compute_orders.py but over the aggregated streams) ------------
-def _wiggle(order, W):
-    cum = np.zeros(W.shape[0]); total = 0.0
-    for idx in order:
-        d = np.diff(cum); total += float(np.dot(d, d)); cum = cum + W[:, idx]
-    return total
+# --- per-lens stacking order: wiggle minimization + succession fidelity ----
+#     Wiggle math lives in succession.py now; this adds the constraint that two
+#     streams aren't placed adjacent as a false handoff (A falls as B rises) with
+#     no real population transfer between them. Transfers come from
+#     data/processed/transfer_matrix.csv (pipeline/transfer_matrix.py), mapped
+#     onto streams with the SAME name->stream classifier used everywhere here.
+def stream_transfers(name_to_stream):
+    path = ROOT / "data" / "processed" / "transfer_matrix.csv"
+    pair = {}
+    if not path.exists():
+        return pair
+    tf = pd.read_csv(path)
+    for a, b, pop in zip(tf["from"], tf["to"], tf["population"]):
+        sa, sb = name_to_stream.get(a), name_to_stream.get(b)
+        if sa and sb and sa != sb:
+            key = frozenset((sa, sb))
+            pair[key] = pair.get(key, 0.0) + float(pop)
+    return pair
 
 
-def _inside_out(W):
-    sums = W.sum(axis=0); idxs = list(np.argsort(-sums))
-    tops, bottoms, ts, bs = [], [], 0.0, 0.0
-    for idx in idxs:
-        if ts < bs: tops.append(idx); ts += sums[idx]
-        else: bottoms.append(idx); bs += sums[idx]
-    return list(reversed(bottoms)) + tops
-
-
-def _optimize(W, max_passes=8):
-    """inside-out start, then local adjacent swaps that lower wiggle."""
-    order = _inside_out(W); best = _wiggle(order, W)
-    for _ in range(max_passes):
-        improved = False
-        for i in range(len(order) - 1):
-            cand = order[:]; cand[i], cand[i + 1] = cand[i + 1], cand[i]
-            c = _wiggle(cand, W)
-            if c < best - 1e-12:
-                order, best, improved = cand, c, True
-        if not improved:
-            break
-    return order
-
-
-def lens_order(streams, share_rows):
-    """share_rows: dict stream -> [share per year]. Returns streams bottom->top."""
-    W = np.array([share_rows[s] for s in streams]).T  # years x streams
-    return [streams[i] for i in _optimize(W)]
+def lens_order(streams, share_rows, pair):
+    """share_rows: dict stream -> [share per year]. Returns streams bottom->top,
+    minimizing wiggle subject to no false-handoff adjacency (succession.py)."""
+    W = np.array([share_rows[s] for s in streams]).T   # years x streams
+    forbidden = succession.forbidden_pairs(W, streams, pair)
+    order, _ = succession.optimize(W, forbidden)
+    return [streams[i] for i in order]
 
 
 def exclusive_area(years, name_to_stream, res_m=5000):
@@ -237,6 +230,44 @@ def main():
     else:
         print("GDP: gdp_intusd.csv absent — economy lens stays disabled")
 
+    # --- dynamic vectors: data/processed/vectors/*.csv -> extra extensive facts ---
+    # Each CSV is (polity_id, year, <value>); the value column NAMES the fact
+    # written into web/facts.js (e.g. urban_pop, cultural_figures), so adding a
+    # dimension is adding a file here — no code change downstream. Aggregated to
+    # streams with the same name_to_stream mapping GDP uses; the per-slice world
+    # total is all attributed value, so unattributed value is an honest residual.
+    # Placed AFTER name_to_stream is fully populated and BEFORE the FACTS emit.
+    vectors = {}       # fact_key -> {year -> {stream -> value}}
+    vec_world = {}     # fact_key -> {year -> total}
+    if VEC_DIR.exists():
+        for csv_path in sorted(VEC_DIR.glob("*.csv")):
+            vdf = pd.read_csv(csv_path)
+            value_cols = [c for c in vdf.columns if c not in ("polity_id", "year")]
+            if not value_cols:
+                print(f"vectors: {csv_path.name} has no value column — skipped")
+                continue
+            key = value_cols[0]
+            vectors[key] = {y: {} for y in years}
+            vec_world[key] = {y: 0.0 for y in years}
+            placed = 0
+            for r in vdf.itertuples(index=False):
+                y = int(r.year)
+                if y not in vectors[key]:
+                    continue
+                val = getattr(r, key)
+                if pd.isna(val):
+                    continue
+                val = float(val)
+                vec_world[key][y] += val
+                stream = name_to_stream.get(r.polity_id)
+                if stream is not None:
+                    vectors[key][y][stream] = vectors[key][y].get(stream, 0.0) + val
+                    placed += 1
+            print(f"vectors: {csv_path.name} -> fact '{key}' "
+                  f"({placed:,} stream-years attributed)")
+    else:
+        print("vectors: data/processed/vectors/ absent — no extra dimensions")
+
     # --- emit web/polities.js ---
     polities = [{"id": s, "name": s, "civ": regions.get(s, "unknown")} for s in streams]
     emit_js("POLITIES", polities, WEB / "polities.js")
@@ -254,6 +285,9 @@ def main():
                 entry["area_km2"] = round(area[y][s], 3)
             if s in gdp[y]:
                 entry["gdp_int_usd"] = round(gdp[y][s], 1)
+            for key, vy in vectors.items():
+                if s in vy[y]:
+                    entry[key] = round(vy[y][s], 3)
             if entry:
                 slot[s] = entry
         facts[str(y)] = slot
@@ -274,6 +308,9 @@ def main():
         t = {"population": world_pop, "area_km2": max(WORLD_LAND_KM2, mapped)}
         if gdp_world[y] > 0:
             t["gdp"] = gdp_world[y]
+        for key, wy in vec_world.items():
+            if wy[y] > 0:
+                t[key] = wy[y]
         totals[str(y)] = t
     emit_js("TOTALS", totals, WEB / "totals.js")
 
@@ -315,11 +352,12 @@ def main():
         "Economic":                  (0.25, 0.15, 0.60),
     }
     orders = {"pop": streams}                     # keep Demograph's optimized order
-    print("optimizing per-lens orders ...")
-    orders["area"] = lens_order(streams, area_sh)
-    orders["gdp"]  = lens_order(streams, gdp_sh)
+    pair = stream_transfers(name_to_stream)
+    print(f"optimizing per-lens orders (succession-aware; {len(pair)} stream transfer pairs) ...")
+    orders["area"] = lens_order(streams, area_sh, pair)
+    orders["gdp"]  = lens_order(streams, gdp_sh, pair)
     for label, (wp, wa, wg) in presets.items():
-        orders[f"power:{label}"] = lens_order(streams, blend(wp, wa, wg))
+        orders[f"power:{label}"] = lens_order(streams, blend(wp, wa, wg), pair)
     emit_js("ORDERS", orders, WEB / "orders.js")
     with (WEB / "orders.js").open("a", encoding="utf-8") as f:
         f.write("window.ORDER_PRESETS = " +

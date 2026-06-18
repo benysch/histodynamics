@@ -1,6 +1,12 @@
 """
 compute_orders.py
 =================
+SUPERSEDED — not part of the live pipeline, and its presets are stale (only
+pop/area, scalar weights 0.0/0.5/0.7). The shipped web/orders.js is produced by
+the inline lens_order() in pipeline/align_territory.py, whose presets
+(Demographic/Balanced/Sparks-led/Economic, with GDP) match web/lenses.js. Kept
+for reference; do not run.
+
 Precompute the stacking order (bottom -> top) that minimizes "wiggle" for each
 lens, plus one order per composite preset. Emits web/orders.js so the frontend
 swaps order instantly on lens change instead of re-solving in the browser.

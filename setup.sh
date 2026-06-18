@@ -39,9 +39,10 @@ commit "Project identity: README, NOTICE, LICENSE, scaffolding"
 c docs/metric-layer.md docs/INTEGRATION.md docs/BUILD_ORDER.md docs/prototype-lens-controls.html
 commit "Design spec: metric layer, integration, build order"
 
-# 4 — raw-facts pipeline
-c pipeline/compute_area.py pipeline/emit_facts.py
-commit "Pipeline: territory area + raw-facts emission (facts/totals/polities)"
+# 4 — raw-facts pipeline (align_territory.py is the LIVE emitter; compute_area.py
+#     and emit_facts.py are superseded Demograph templates, kept for reference)
+c pipeline/align_territory.py pipeline/compute_area.py pipeline/emit_facts.py
+commit "Pipeline: territory + raw-facts emission (align_territory; facts/totals/polities/orders)"
 
 # 5+6 — metric engine (lenses + simple/composite engine; this snapshot ships
 #        the v2 3-component lens config, GDP included)
@@ -64,8 +65,8 @@ c docs/gdp-and-sensitivity.md docs/prototype-sensitivity-panel.html
 commit "v0.2 spec: GDP component + sensitivity view"
 
 # 12 — GDP component (pipeline side; lens config already shipped in the engine commit)
-c pipeline/compute_gdp.py
-commit "GDP component: cell-attributed GDP per polity (Maddison)"
+c pipeline/compute_gdp.py pipeline/emit_gdp_meta.py
+commit "GDP component: cell-attributed GDP per polity (Maddison) + est_frac meta"
 
 # 13 — sensitivity engine + panel
 c web/sensitivity.js web/sensitivity-panel.js
@@ -102,7 +103,7 @@ MANUAL STEPS (need files not in this snapshot — see docs/BUILD_ORDER.md):
   • Commits 10 / 15 — polish + deploy to Vercel; tag v0.1 then v0.2.
 
 BEFORE PUSHING:
-  • Rename the "Polimetric" placeholder in README.md and NOTICE.
+  • Project name is Histodynamics (the "Polimetric" placeholder was renamed).
   • Confirm the Demograph author name in README acknowledgements.
 ────────────────────────────────────────────────────────────────────────
 NOTE

@@ -1,6 +1,13 @@
 """
 emit_facts.py
 =============
+SUPERSEDED — not part of the live pipeline. This is the vendored Demograph
+template; it assumes a flat polity_id taxonomy and emits only population + area
+(no GDP, no vectors), reading inputs that aren't in this repo. The shipped
+web/facts.js / totals.js / polities.js / orders.js are produced by
+pipeline/align_territory.py (keyed by aggregated streams, with GDP + dynamic
+vectors threaded in). Kept for reference; do not run.
+
 Join the processed per-polity tables into the three JS files the static
 frontend loads. Emits RAW facts only; the frontend turns them into per-lens
 shares (see docs/metric-layer.md).

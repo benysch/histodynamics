@@ -1,6 +1,6 @@
 # Wiring the metric layer into Demograph's renderer
 
-Demograph's `web/index.html` is a single ~1,255-line static page. It builds its
+Demograph's `web/index.html` is a single large static page. It builds its
 stream **once** from a precomputed global (in `web/data.js`) and redraws on
 sidebar changes. We don't replace its renderer — we regenerate that global from
 the active lens and call its redraw. Its controls live in `#sidebar` as `.sb-sec`

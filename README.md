@@ -1,12 +1,10 @@
-# Polimetric
+# Histodynamics
 
 **A histomap you can re-measure.** Four thousand years of world history as a
 single vertical stream graph — but the *metric* setting the width of each stream
 is a dimension you switch live. Population share, territory share, or a
 **relative power** lens whose definition you set yourself, watching the whole
 chart reorder as you slide the weights.
-
-> Working title — rename throughout before going public if you pick another.
 
 🔗 **Live demo:** _(add your Vercel URL)_ · or open [`web/index.html`](web/index.html) — static, no build step.
 
@@ -20,7 +18,7 @@ of "relative power" — its most-criticized flaw. The brilliant
 **replacing** power with one defensible metric: share of world population under
 each polity.
 
-Polimetric takes the opposite tack on the same critique. Instead of banishing
+Histodynamics takes the opposite tack on the same critique. Instead of banishing
 "relative power," it makes the **metric itself the variable**:
 
 - Power was never undefinable — only *unspecified*. So you specify it.
@@ -41,11 +39,41 @@ palettes, annotations, export — is derived from data, in the Demograph spirit.
 | **Population share** | share of world population under each polity | the Demograph metric |
 | **Territory share** | share of mapped land area | free from polygon area at rasterization |
 | **Economic share** | share of world GDP (Maddison) | low confidence before ~1500; degrades toward population there |
-| **Relative power** | weighted blend of the three above, **your weights** | presets: Demographic · Balanced · Sparks-led · Economic |
+| **Relative power** | weighted blend of population/territory/economy, **your weights** | presets: Demographic · Balanced · Sparks-led · Economic |
+| **Structural complexity** † | share of world urban population | urbanization as a proxy for institutional maturity (Clio Infra) |
+| **Cultural centrality** † | share of globally-translated historical figures born here | soft power by cross-border reach, not taste (MIT Pantheon) |
+
+† **Data-gated.** These two lenses ship in `lenses.js` and light up automatically
+once their raw facts are present; until then the UI shows them disabled. They are
+*intensive* sources (a rate; lat/lon points) **massified** into extensive facts
+before entering the pipeline — see *Adding a dimension* below. They are deliberately
+**not** folded into the Relative-power composite yet: that lens stays three-way so
+its ternary "who leads" sensitivity diagram keeps its three vertices.
 
 The composite iterates its components generically, so adding a metric (military
 spend, …) is a new lens in `lenses.js` with **no engine change** — see the
 design doc.
+
+### Adding a dimension
+
+The engine works strictly on **extensive** (additive) facts — total persons, km²,
+int\$. A source that is *intensive* (a percentage) or non-polygonal (lat/lon
+points) is first converted to an extensive mass, then dropped into the pipeline as
+one CSV:
+
+- **Massify** the source into `data/processed/vectors/<fact>.csv`
+  (`polity_id, year, <fact>`). Urbanization % → urban persons:
+  [`pipeline/compute_complexity.py`](pipeline/compute_complexity.py). Figure
+  birthplaces → per-polity counts via a spatial join:
+  [`pipeline/compute_culture.py`](pipeline/compute_culture.py).
+- `pipeline/align_territory.py` **scans** that folder and attaches every vector to
+  `web/facts.js` (with a world total in `web/totals.js`) — *no code change to add a
+  file*.
+- Add a `SimpleLens` in `web/lenses.js` whose `totalKey`/`extract` name that fact.
+
+Raw inputs (Clio Infra urbanization, MIT Pantheon, Cliopatria polygons) are
+**not committed**; stage them under `data/raw/` — see
+[`data/raw/README.md`](data/raw/README.md).
 
 ## Architecture
 
@@ -86,6 +114,25 @@ server.
   [`docs/INTEGRATION.md`](docs/INTEGRATION.md) — a banner makes the distinction
   clear.
 
+## Tests
+
+Two zero-config suites, run in CI on every push/PR
+([`.github/workflows/tests.yml`](.github/workflows/tests.yml)):
+
+```bash
+node --test                                       # metric-layer regression (no deps)
+python -m unittest discover -s tests -p "test_*.py"   # ordering core (needs numpy + pandas)
+```
+
+[`tests/metric-layer.test.js`](tests/metric-layer.test.js) loads the web globals
+into a fake `window` (exactly index.html's load order) and locks: the phase-diagram
+fast path (`prepareLeader`) is identical to the engine's argmax at every weight;
+`pickOrder` distinguishes population-, territory-, and economy-led weights (the 3‑D
+preset fix); composite shares are a proper distribution; and no catch-all bundle is
+ever crowned leader. [`tests/test_succession.py`](tests/test_succession.py) exercises
+the wiggle + succession-fidelity core ([`pipeline/succession.py`](pipeline/succession.py)):
+orders drive forbidden "false handoff" adjacencies to zero, then minimize wiggle.
+
 ## Rebuild the data
 
 The pipeline emits **raw facts**, not pre-baked shares — the frontend turns them
@@ -99,7 +146,7 @@ python -m venv .venv
 #    download_hyde.py + compute_shares.py  -> population (persons) per polity per slice.
 #    Place Cliopatria & Natural Earth in data/raw/ first.
 
-# 2. Territory, aligned to Demograph's 262 aggregated streams and emitted as the
+# 2. Territory, aligned to Demograph's 261 aggregated streams and emitted as the
 #    metric-layer globals the renderer consumes. Downloads Cliopatria (~44 MB,
 #    ephemeral, gitignored under data/raw/):
 curl -L https://raw.githubusercontent.com/Seshat-Global-History-Databank/cliopatria/main/cliopatria.geojson.zip \

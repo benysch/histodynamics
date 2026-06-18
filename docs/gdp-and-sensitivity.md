@@ -40,14 +40,26 @@ guesses before ~1500**, hovering near a subsistence floor. So:
 | File | Change |
 |------|--------|
 | `pipeline/compute_gdp.py` | **new** — cell-GDP attribution → `gdp_int_usd.csv` |
-| `pipeline/emit_facts.py` | add `gdp_int_usd` to facts; add world GDP to totals |
+| `pipeline/align_territory.py` | add `gdp_int_usd` to facts; add world GDP to totals (this is the live emitter — see its note below) |
 | `web/lenses.js` | add the `gdp` simple lens + a third composite component |
 | `web/engine.js` | **none** — composite already iterates N components |
-| `pipeline/compute_orders.py` | generalize composite to N components; new presets |
-| `web/order.js` | nearest-preset distance over N weights, not just `wArea` |
+| `pipeline/align_territory.py` | generalize composite to N components; new presets (the inline `lens_order`) |
+| `web/order.js` | nearest preset over the **full** normalized weight vector (pop/territory/economy), via the composites' preset weights in `LENS_BY_ID` |
 | `web/lens-adapter.js` | ≥3 components → weight bars instead of the balance bar |
 
 `engine.js` needing no change is the architecture paying off.
+
+> **Implementation notes (doc kept honest with the shipped code):**
+> - The live emitter is **`pipeline/align_territory.py`**, not `emit_facts.py`
+>   (which is a superseded Demograph template). It threads GDP and any
+>   `data/processed/vectors/*.csv` into `web/facts.js` / `totals.js`, and bakes
+>   per-lens orders via its inline `lens_order` (wiggle + succession fidelity,
+>   shared with `pipeline/succession.py`), not `compute_orders.py`.
+> - **`order.js` now matches the full weight vector** (the surgical patch below
+>   *was* adopted): matching on `wArea` alone collapsed the simplex onto one axis,
+>   so population-led (`wPop=1`) and economy-led (`wGdp=1`) both read as `wArea=0`
+>   and shared the "Demographic" order. Comparing the whole normalized vector
+>   keeps those orders distinct (locked by `tests/metric-layer.test.js`).
 
 ### Surgical patches
 
