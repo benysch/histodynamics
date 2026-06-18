@@ -127,6 +127,13 @@
   .seg .opt:hover { background: var(--grid); }
   .seg .opt.active { background: var(--ink); color: var(--bg); font-weight: 600; }
   .seg .opt + .opt { border-left: 1px solid var(--muted); }
+  /* The lens picker holds six entries with long labels; a single horizontal
+     segmented bar overflowed and clipped to ~2 on narrow/mobile sidebars. Lay
+     it out as a wrapping two-column grid of chips instead. */
+  #sb-lens { display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+             border: none; overflow: visible; }
+  #sb-lens .opt { border: 1px solid var(--muted); border-radius: 5px;
+                  white-space: normal; line-height: 1.15; }
   .ck { display: flex; align-items: center; gap: 8px; font-size: 12.5px;
     color: var(--ink); cursor: pointer; padding: 4px 0; }
   .ck input { accent-color: var(--ink); margin: 0; }
@@ -153,9 +160,9 @@
 <body>
 <button id="sidebar-toggle">&#9776; Options</button>
 <aside id="sidebar">
-  <div class="sb-title">DEMOGRAPH</div>
-  <div class="sb-sub">Four thousand years of world population &mdash; a
-  data-driven remake of Sparks's 1931 <em>Histomap</em>.</div>
+  <div class="sb-title">HISTODYNAMICS</div>
+  <div class="sb-sub">Four thousand years of world history, sized by a metric you
+  choose &mdash; a metric layer over Demograph's <em>Histomap</em> renderer.</div>
 
   <div class="sb-sec" id="sb-lens-sec">
     <div class="sb-label">Measure by</div>
