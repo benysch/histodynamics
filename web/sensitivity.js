@@ -63,10 +63,25 @@
     return best;
   }
 
+  // Component shares are pure per (lens, year). The panel recolors a ~270-cell
+  // triangle on every weight/year change; cache the last slice's components so a
+  // cell asks for its leader via one cheap blend instead of a full engine
+  // recompute (docs/BUILD_ORDER.md step 15 — "cache component shares per year").
+  var _slice = { key: null, comps: null };
+  function componentShares(lens, year) {
+    var key = lens.id + "@" + year;
+    if (_slice.key !== key) { _slice.key = key; _slice.comps = compShares(lens, year); }
+    return _slice.comps;
+  }
+  function leaderAtWeights(lensId, year, params) {
+    var lens = global.LENS_BY_ID[lensId];
+    return argmax(blend(componentShares(lens, year), params));
+  }
+
   /* who leads at each grid point. 2 comps -> strip; 3 -> ternary triangle. */
   function leaderSweep(lensId, year, R) {
     var lens = global.LENS_BY_ID[lensId];
-    var comps = compShares(lens, year);
+    var comps = componentShares(lens, year);
     return simplexGrid(lens.components.length, R || 16).map(function (bary) {
       var s = blend(comps, weightsFrom(lens, bary));
       var leader = argmax(s);
@@ -77,7 +92,7 @@
   /* fraction of the weight space where `polityId` holds each rank + share range */
   function rankStability(lensId, polityId, year, R) {
     var lens = global.LENS_BY_ID[lensId];
-    var comps = compShares(lens, year);
+    var comps = componentShares(lens, year);
     var grid = simplexGrid(lens.components.length, R || 16);
     var rankCount = {}, n = grid.length, sMin = Infinity, sMax = 0, leadCount = 0;
     grid.forEach(function (bary) {
@@ -101,7 +116,7 @@
     var years = global.Engine.sliceYears();
     var grid = simplexGrid(lens.components.length, R || 10);
     return years.map(function (year) {
-      var comps = compShares(lens, year);
+      var comps = componentShares(lens, year);
       var lo = Infinity, hi = 0;
       grid.forEach(function (bary) {
         var v = blend(comps, weightsFrom(lens, bary))[polityId] || 0;
@@ -144,6 +159,7 @@
 
   global.Sensitivity = {
     leaderSweep: leaderSweep,
+    leaderAtWeights: leaderAtWeights,
     rankStability: rankStability,
     robustnessRibbon: robustnessRibbon,
     summarize: summarize,

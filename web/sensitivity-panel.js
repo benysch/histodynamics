@@ -59,15 +59,20 @@
 
     var cur = { year: null, params: {}, focusId: null };
 
+    // Coalesce bursts of update() (slider drags fire one per rAF already, but a
+    // weight change repaints both the chart and us) into a single repaint.
+    var pending = false;
     function update(s) {
       cur = Object.assign(cur, s);
-      paint();
+      if (pending) return;
+      pending = true;
+      (global.requestAnimationFrame || function (f) { setTimeout(f, 16); })(function () {
+        pending = false; paint();
+      });
     }
 
     function paint() {
       tri.innerHTML = "";
-      var sweep = global.Sensitivity.leaderSweep(lensId, cur.year, R_FILL);
-      // index sweep results by a grid lookup isn't needed — recolor by cell centroid
       var seen = {};
       for (var i = 0; i < R_FILL; i++) {
         for (var j = 0; i + j < R_FILL; j++) {
@@ -97,19 +102,12 @@
       }));
     }
 
-    // leader at one barycentric weight, via the same blend the engine uses
+    // leader at one barycentric weight — a cached blend (no engine recompute per
+    // cell; the components are cached per slice in sensitivity.js).
     function leaderAt(bary) {
       var params = {};
       lens.components.forEach(function (comp, idx) { params[comp.weightKey] = bary[idx]; });
-      // reuse engine through a single-point sweep would be wasteful; ask Sensitivity
-      var s = global.Sensitivity.leaderSweep; // (kept for parity; inline below)
-      return leaderViaEngine(params);
-    }
-    function leaderViaEngine(params) {
-      var r = global.Engine.computeSlice(lens, cur.year, params).shares;
-      var best = null, bv = -Infinity;
-      for (var p in r) if (r[p] > bv) { bv = r[p]; best = p; }
-      return best;
+      return global.Sensitivity.leaderAtWeights(lensId, cur.year, params);
     }
 
     function vlabel(t, x, y, anchor) {
