@@ -1,0 +1,1412 @@
+polity_id,year,cultural_figures
+(Anglo-Saxon England),650,1
+(Anglo-Saxon England),700,2
+(Anglo-Saxon England),750,3
+(Anglo-Saxon England),800,6
+(Anglo-Saxon England),850,8
+(Anglo-Saxon England),900,11
+(British Empire),1750,108
+(British Empire),1800,198
+(British Empire),1850,363
+(British Empire),1900,828
+(British Empire),1950,1234
+(Brythonic Kingdoms),650,1
+(Brythonic Kingdoms),700,1
+(Brythonic Kingdoms),750,1
+(Brythonic Kingdoms),800,1
+(Brythonic Kingdoms),850,1
+(Brythonic Kingdoms),900,1
+(Brythonic Kingdoms),950,1
+(Brythonic Kingdoms),1000,1
+(Brythonic Kingdoms),1050,1
+(Brythonic Kingdoms),1100,1
+(Brythonic Kingdoms),1150,1
+(Brythonic Kingdoms),1200,1
+(Brythonic Kingdoms),1250,2
+(Carolingian Empire),750,4
+(Carolingian Empire),800,7
+(Carolingian Empire),850,10
+(Carolingian Empire),900,13
+(Carolingian Empire),950,14
+(Delhi Sultanate),1250,1
+(Delhi Sultanate),1300,1
+(Delhi Sultanate),1350,1
+(Delhi Sultanate),1400,1
+(Delhi Sultanate),1450,2
+(Delhi Sultanate),1500,2
+(Dutch Republic),1600,13
+(Dutch Republic),1650,15
+(Dutch Republic),1700,16
+(Dutch Republic),1750,19
+(French Consulate),1800,10
+(French Fourth Republic),1950,57
+(French Second Republic),1850,14
+(French Third Republic),1900,224
+(Habsburg Monarchy),1500,10
+(Habsburg Monarchy),1550,16
+(Habsburg Monarchy),1600,21
+(Habsburg Monarchy),1650,24
+(Habsburg Monarchy),1700,36
+(Habsburg Monarchy),1750,52
+(Habsburg Monarchy),1800,57
+(Holy Roman Empire),950,3
+(Holy Roman Empire),1000,10
+(Holy Roman Empire),1050,17
+(Holy Roman Empire),1100,22
+(Holy Roman Empire),1150,33
+(Holy Roman Empire),1200,39
+(Holy Roman Empire),1250,50
+(Holy Roman Empire),1300,55
+(Holy Roman Empire),1350,74
+(Holy Roman Empire),1400,95
+(Holy Roman Empire),1450,114
+(Holy Roman Empire),1500,121
+(Holy Roman Empire),1550,129
+(Holy Roman Empire),1600,133
+(Holy Roman Empire),1650,141
+(Holy Roman Empire),1700,155
+(Holy Roman Empire),1750,177
+(Holy Roman Empire),1800,181
+(Kalmar Union),1450,5
+(Kalmar Union),1500,6
+(Kingdom of Bohemia),1250,3
+(Kingdom of Bohemia),1300,5
+(Kingdom of Bohemia),1350,7
+(Kingdom of Bohemia),1400,7
+(Kingdom of Bohemia),1450,7
+(Kingdom of Bohemia),1500,7
+(Kingdom of Denmark),1350,1
+(Kingdom of Denmark),1400,1
+(Kingdom of England),950,6
+(Kingdom of England),1000,8
+(Kingdom of England),1050,9
+(Kingdom of England),1100,16
+(Kingdom of England),1150,20
+(Kingdom of England),1200,23
+(Kingdom of England),1250,25
+(Kingdom of England),1300,30
+(Kingdom of England),1350,34
+(Kingdom of England),1400,38
+(Kingdom of England),1450,51
+(Kingdom of England),1500,66
+(Kingdom of England),1550,80
+(Kingdom of England),1600,97
+(Kingdom of England),1650,114
+(Kingdom of England),1700,119
+(Kingdom of France),1000,6
+(Kingdom of France),1050,19
+(Kingdom of France),1100,24
+(Kingdom of France),1150,27
+(Kingdom of France),1200,35
+(Kingdom of France),1250,49
+(Kingdom of France),1300,59
+(Kingdom of France),1350,64
+(Kingdom of France),1400,72
+(Kingdom of France),1450,88
+(Kingdom of France),1500,101
+(Kingdom of France),1550,114
+(Kingdom of France),1600,142
+(Kingdom of France),1650,160
+(Kingdom of France),1700,198
+(Kingdom of France),1750,270
+(Kingdom of Poland),1000,2
+(Kingdom of Poland),1050,3
+(Kingdom of Poland),1100,3
+(Kingdom of Poland),1350,4
+(Kingdom of Poland),1400,6
+(Kingdom of the Franks),500,2
+(Kingdom of the Franks),550,2
+(Kingdom of the Franks),600,2
+(Kingdom of the Franks),650,3
+(Kingdom of the Franks),700,3
+(Kingdom of the Franks),750,7
+(Kingdom of the Franks),800,10
+(Macedonian Empire),-400,2
+(Macedonian Empire),-350,2
+(Macedonian Empire),-325,2
+(Macedonian Empire),-320,4
+(Macedonian Empire),-300,4
+(Merovingian Empire),500,4
+(Merovingian Empire),550,4
+(Merovingian Empire),600,4
+(Merovingian Empire),650,5
+(Merovingian Empire),700,5
+(Netherlands),1850,27
+(Netherlands),1900,61
+(Netherlands),1950,132
+(Netherlands),2000,132
+(Netherlands),2015,132
+(Polish-Lithuania Kingdom),1400,2
+(Portuguese Empire),1550,4
+(Portuguese Empire),1600,4
+(Portuguese Empire),1650,4
+(Portuguese Empire),1700,6
+(Portuguese Empire),1750,8
+(Portuguese Empire),1800,10
+(Spanish Empire),1550,33
+(Spanish Empire),1600,44
+(Spanish Empire),1650,48
+(Spanish Empire),1700,55
+(Spanish Empire),1750,67
+(Spanish Empire),1800,73
+(Spanish Empire),1850,104
+(Spanish Empire),1900,114
+(Taifas of Iberia),1050,3
+(Taifas of Iberia),1100,3
+(Taifas of Iberia),1150,4
+(Warring States China),-400,2
+(Warring States China),-350,2
+(Warring States China),-325,2
+(Warring States China),-320,2
+(Warring States China),-300,3
+(Warring States China),-250,3
+Abbasid Caliphate,750,5
+Abbasid Caliphate,800,9
+Abbasid Caliphate,850,14
+Abbasid Caliphate,900,14
+Abbasid Caliphate,950,14
+Abbasid Caliphate,1250,14
+Abbasid Caliphate/Buyid Dynasty,950,1
+Achaemenid Empire,-550,2
+Achaemenid Empire,-500,5
+Achaemenid Empire,-450,6
+Achaemenid Empire,-400,9
+Achaemenid Empire,-350,10
+Albanian Principalities,1400,1
+Almohad Caliphate,1200,1
+Almohad Caliphate,1250,1
+Almohad Caliphate,1300,2
+Almoravid Dynasty,1100,3
+Almoravid Dynasty,1150,3
+Almoravid Dynasty,1200,3
+Ambrosian Republic,1450,1
+Angevin Empire,1150,1
+Angevin Empire,1200,2
+Antigonid Macedonia,-250,1
+Antigonid Macedonia,-200,1
+Aq Qoyunlu,1450,2
+Aq Qoyunlu,1500,2
+Arab Republic of Egypt,2000,1
+Arab Republic of Egypt,2015,1
+Argentine Confederation,1850,1
+Argentine Confederation,1900,12
+Argentine Republic,1950,54
+Argentine Republic,2000,54
+Argentine Republic,2015,54
+Assyrian Egypt,-650,3
+Athenian Coalition,-320,1
+Austria-Hungary,1900,144
+Austrian Empire,1850,57
+Ayyubid Sultanate,1200,1
+Babylonia,-1750,1
+Babylonia,-1500,1
+Babylonia,-1250,1
+Babylonia,-1000,1
+Babylonia,-950,1
+Babylonia,-900,1
+Babylonia,-850,1
+Babylonia,-650,1
+Barbados,2000,1
+Barbados,2015,1
+Belgian Congo,1900,2
+Belgian Congo,1950,2
+Bolivia,1950,2
+Bolivia,2000,2
+Bolivia,2015,2
+Brandenburg-Prussia,1650,5
+Brandenburg-Prussia,1700,8
+Brazilian Republic,1900,28
+Brazilian Republic,1950,35
+British Africa,1900,71
+British Africa,1950,82
+British Cape Colony,1800,1
+British Cape Colony,1850,2
+British Colonial Empire,1750,20
+British Colonial Empire,1800,23
+British Colonial Empire,1850,35
+British Colonial Empire,1900,76
+British Colonial Empire,1950,86
+British Empire,1800,3
+British Empire,1850,4
+British Raj,1900,70
+Burma,1950,1
+Byzantine Empire,650,9
+Byzantine Empire,700,13
+Byzantine Empire,750,16
+Byzantine Empire,800,17
+Byzantine Empire,850,17
+Byzantine Empire,900,18
+Byzantine Empire,950,18
+Byzantine Empire,1000,18
+Byzantine Empire,1050,19
+Byzantine Empire,1100,19
+Byzantine Empire,1150,23
+Byzantine Empire,1200,23
+Byzantine Empire,1300,25
+Byzantine Empire,1350,26
+Byzantine Empire,1400,26
+Byzantine Empire,1450,26
+Caliphate of Córdoba,950,2
+Caliphate of Córdoba,1000,2
+Caliphate of Córdoba,1050,2
+Canada,1950,70
+Canada,2000,70
+Canada,2015,70
+Capetian House of Anjou,1300,1
+Capetian House of Anjou,1350,1
+Chagatai Khanate,1300,1
+Chagatai Khanate,1350,1
+Chagatai Khanate,1400,1
+Chagatai Khanate,1450,1
+Chu,-400,1
+Chu,-350,1
+Chu,-325,1
+Chu,-320,1
+Chu,-300,1
+Chu,-250,1
+Commonwealth of Australia,1950,86
+Commonwealth of Australia,2000,86
+Commonwealth of Australia,2015,86
+Commonwealth of England,1650,6
+Communist Cuba,2000,3
+Communist Cuba,2015,3
+Comtat Venaissin,1500,1
+Comtat Venaissin,1550,1
+Comtat Venaissin,1600,1
+Comtat Venaissin,1650,1
+Comtat Venaissin,1700,1
+Comtat Venaissin,1750,1
+County of Anjou,1050,2
+County of Anjou,1100,3
+County of Anjou,1300,4
+County of Artois,1250,2
+County of Artois,1300,3
+County of Blôis,1000,2
+County of Blôis,1050,4
+County of Blôis,1100,5
+County of Blôis,1150,5
+County of Blôis,1200,5
+County of Blôis,1250,5
+County of Blôis,1300,5
+County of Blôis,1350,5
+County of Blôis,1400,5
+County of Brabant,1350,1
+County of Brabant,1400,1
+County of Champagne,1000,2
+County of Champagne,1050,2
+County of Champagne,1100,3
+County of Champagne,1200,5
+County of Champagne,1250,6
+County of Flanders,1200,1
+County of Flanders,1250,1
+County of Flanders,1300,2
+County of Flanders,1350,3
+County of Foix,1500,2
+County of Foix,1550,3
+County of Savoy,1350,1
+County of Savoy,1400,1
+County of Savoy,1450,1
+County of Savoy,1500,1
+County of Toulouse,1050,1
+County of Toulouse,1100,1
+County of Toulouse,1150,1
+County of Toulouse,1200,3
+County of Vermandois,1050,1
+County of Vermandois,1100,1
+County of Vermandois,1150,1
+County of Vermandois,1200,1
+Crown of Aragon,1300,1
+Crown of Aragon,1350,2
+Crown of Aragon,1400,4
+Crown of Aragon,1450,5
+Crown of Aragon,1500,6
+Crown of Castile,1300,1
+Crown of Castile,1350,2
+Crown of Castile,1400,4
+Crown of Castile,1450,17
+Crown of Castile,1500,23
+Cyrenaica,-320,1
+Cyrenaica,-300,1
+Cyrenaica,-250,1
+Cyrenaica,-100,1
+Czechoslovakia,1950,24
+Democratic People's Republic of Korea,1950,2
+Democratic People's Republic of Korea,2000,2
+Democratic People's Republic of Korea,2015,2
+Denmark,1950,18
+Denmark,2000,18
+Denmark,2015,18
+Denmark-Norway,1550,4
+Denmark-Norway,1600,7
+Denmark-Norway,1650,10
+Denmark-Norway,1700,11
+Denmark-Norway,1750,13
+Denmark-Norway,1800,19
+Denmark-Norway,1850,30
+Denmark-Norway,1900,33
+Dominican Republic,1850,1
+Dominican Republic,1900,1
+Dominican Republic,1950,2
+Dominican Republic,2000,2
+Dominican Republic,2015,2
+Duchy of Anhalt,1850,1
+Duchy of Aquitaine,1000,1
+Duchy of Aquitaine,1050,5
+Duchy of Aquitaine,1100,6
+Duchy of Aquitaine,1250,8
+Duchy of Aquitaine,1300,9
+Duchy of Aquitaine,1350,9
+Duchy of Aquitaine,1400,9
+Duchy of Bavaria,1300,1
+Duchy of Bavaria,1400,4
+Duchy of Bavaria,1450,6
+Duchy of Bavaria,1500,6
+Duchy of Bavaria,1550,8
+Duchy of Bavaria,1600,8
+Duchy of Bavaria,1650,9
+Duchy of Bavaria,1700,13
+Duchy of Bavaria,1750,15
+Duchy of Bavaria,1800,15
+Duchy of Benevento,1000,1
+Duchy of Bohemia,900,1
+Duchy of Bohemia,950,2
+Duchy of Bohemia,1000,2
+Duchy of Brittany,1450,2
+Duchy of Brunswick,1850,1
+Duchy of Burgundy,1400,4
+Duchy of Burgundy,1450,10
+Duchy of Lorraine,1600,1
+Duchy of Lorraine,1650,1
+Duchy of Lorraine,1700,2
+Duchy of Lorraine,1750,2
+Duchy of Mecklenburg,1850,4
+Duchy of Milan,1500,6
+Duchy of Nassau,1850,4
+Duchy of Normandy,1000,1
+Duchy of Normandy,1050,2
+Duchy of Warsaw,1850,9
+Dumnonia,650,1
+Dumnonia,700,1
+Durrani Empire,1750,1
+Durrani Empire,1800,1
+Dutch East Indies,1850,1
+Dutch East Indies,1900,5
+Dutch Republic,1600,13
+Dutch Republic,1650,15
+Dutch Republic,1700,16
+Dutch Republic,1750,19
+East Franks,850,1
+East Franks,900,1
+Eastern Hungarian Kingdom,1550,1
+Eastern Roman Empire,450,3
+Eastern Roman Empire,500,9
+Eastern Roman Empire,550,13
+Eastern Roman Empire,600,22
+Elam,-1000,1
+Elam,-950,1
+Elam,-900,1
+Elam,-850,1
+Elam,-800,1
+Elam,-750,1
+Elam,-700,1
+Elam,-650,1
+Electorate of Hanover,1750,8
+Electorate of Hanover,1800,8
+Electorate of Hesse,1850,3
+Electorate of Saxony,1500,3
+Electorate of Saxony,1550,3
+Electorate of Saxony,1600,4
+Electorate of Saxony,1650,6
+Electorate of Saxony,1800,9
+Electorate of Trier,1350,2
+Electorate of Trier,1400,2
+Electorate of Trier,1450,5
+Electorate of Trier,1500,6
+Electorate of Trier,1550,7
+Electorate of Trier,1600,7
+Emirate of Afghanistan,1850,2
+Emirate of Afghanistan,1900,5
+Emirate of Córdoba,900,1
+Emirate of Jabal Shammar,1900,1
+Emirate of Nejd,1850,1
+Emirate of Nejd,1900,4
+Empire of Brazil,1850,9
+Empire of Haiti,1900,1
+Empire of Japan,1900,63
+English Colonial Empire,1700,1
+English Colonial Empire,1750,1
+Estado Novo,1950,26
+Estado Novo,2000,26
+Estado Novo,2015,26
+Eswatini,2000,1
+Eswatini,2015,1
+Ethiopia,1950,5
+Ethiopia,2000,5
+Ethiopia,2015,5
+Ethiopian Empire,1850,1
+Ethiopian Empire,1900,3
+Federal Republic of Germany,1950,126
+Federal Republic of Nigeria,2000,10
+Federal Republic of Nigeria,2015,10
+Federal Republic of Somalia,2000,4
+Federal Republic of Somalia,2015,4
+Federated Republic of Germany,2000,2
+Federated Republic of Germany,2015,2
+Federated Republic of Mexico,1850,2
+First Bulgarian Empire,800,1
+First Bulgarian Empire,850,2
+First Bulgarian Empire,900,2
+First Bulgarian Empire,950,3
+First Bulgarian Empire,1000,3
+First Hellenic Republic,1850,5
+First Hellenic Republic,1900,17
+Francoist Spain,1950,43
+Free City of Hamburg,1850,3
+Free City of Lübeck,1850,1
+French Africa,1850,1
+French Africa,1900,36
+French Africa,1950,44
+French Consulate,1800,10
+French Fifth Republic,2000,126
+French Fifth Republic,2015,126
+French Fourth Republic,1950,37
+French Indochina,1900,14
+French Indochina,1950,17
+French Second Republic,1850,14
+French Third Republic,1900,186
+German Africa,1900,1
+German Confederation,1850,49
+German Democratic Republic,1950,23
+German Empire,1900,232
+Ghana,2000,12
+Ghana,2015,12
+Ghaznavid Empire,1000,3
+Ghaznavid Empire,1050,3
+Ghaznavid Empire,1100,3
+Ghaznavid Empire,1150,3
+Ghurid Dynasty,1200,1
+Grand Duchy of Hesse,1850,5
+Grand Duchy of Lithuania,1350,2
+Grand Duchy of Lithuania,1400,2
+Grand Duchy of Saxe-Weimar-Eisenach,1850,4
+Grand Duchy of Tuscany,1800,1
+Grand Principality of Moscow,1300,2
+Grand Principality of Moscow,1350,4
+Grand Principality of Moscow,1400,6
+Grand Principality of Moscow,1450,7
+Grand Principality of Moscow,1500,8
+Great Moravia,850,1
+Great Moravia,900,1
+Great Seljuk Empire,1050,3
+Great Seljuk Empire,1100,5
+Great Seljuk Empire,1150,6
+Great Seljuk Empire,1200,6
+Greek City-States,-650,5
+Greek City-States,-600,9
+Greek City-States,-550,15
+Greek City-States,-500,21
+Greek City-States,-450,21
+Greek City-States,-400,23
+Greek City-States,-350,23
+Greek City-States,-325,23
+Greek City-States,-320,24
+Greek City-States,-300,24
+Greek City-States,-200,25
+Greek City-States,-150,25
+Greek City-States,-100,25
+Greek City-States,-50,25
+Greek City-States,0,25
+Greek City-States,50,25
+Guatemala,1850,1
+Guatemala,1900,2
+Guatemala,1950,4
+Guatemala,2000,4
+Guatemala,2015,4
+Guinea,2000,1
+Guinea,2015,1
+Habsburg Monarchy,1500,6
+Habsburg Monarchy,1550,12
+Habsburg Monarchy,1600,17
+Habsburg Monarchy,1650,20
+Habsburg Monarchy,1700,32
+Habsburg Monarchy,1750,48
+Habsburg Monarchy,1800,53
+Hafsid Dynasty,1300,1
+Hafsid Dynasty,1350,1
+Hafsid Dynasty,1400,1
+Hafsid Dynasty,1450,1
+Hafsid Dynasty,1500,1
+Hafsid Dynasty,1550,1
+Hamdanid Emirates,950,1
+Hamdanid Emirates,1000,1
+Hamdanid Emirates,1050,1
+Hamdanid Emirates,1100,1
+Hamdanid Emirates,1150,1
+Hamdanid Emirates,1200,1
+Hamdanid Emirates,1250,1
+Han Dynasty,-200,1
+Han Dynasty,-150,2
+Han Dynasty,-100,2
+Han Dynasty,-50,2
+Han Dynasty,0,2
+Han Dynasty,50,4
+Han Dynasty,100,4
+Han Dynasty,150,9
+Han Dynasty,200,9
+Heian Japan,950,1
+Heian Japan,1000,1
+Heian Japan,1050,1
+Heian Japan,1100,1
+Heian Japan,1150,1
+Holy Roman Empire,1000,8
+Holy Roman Empire,1050,15
+Holy Roman Empire,1100,20
+Holy Roman Empire,1150,31
+Holy Roman Empire,1200,36
+Holy Roman Empire,1250,38
+Holy Roman Empire Minor States,1300,4
+Holy Roman Empire Minor States,1350,8
+Holy Roman Empire Minor States,1400,16
+Holy Roman Empire Minor States,1450,30
+Holy Roman Empire Minor States,1500,37
+Holy Roman Empire Minor States,1550,45
+Holy Roman Empire Minor States,1600,49
+Holy Roman Empire Minor States,1650,57
+Holy Roman Empire Minor States,1700,71
+Holy Roman Empire Minor States,1750,93
+Holy Roman Empire Minor States,1800,97
+Honduras,1900,1
+Honduras,1950,4
+Honduras,2000,4
+Honduras,2015,4
+House of Ascania,1300,1
+House of Ascania,1350,1
+House of Ascania,1400,1
+House of Ascania,1450,1
+House of Bourbon,1550,1
+House of Habsburg,1350,1
+House of Habsburg,1400,2
+House of Habsburg,1450,4
+House of Habsburg,1500,6
+House of Jagiellon,1450,3
+House of Jagiellon,1500,5
+House of Jagiellon,1550,5
+House of Savoy,1600,1
+House of Savoy,1650,2
+House of Savoy,1700,4
+Hungarian People's Republic,1950,10
+Hungary,2000,2
+Hungary,2015,2
+Huns,350,1
+Huns,400,1
+Iberian Union,1600,17
+Icelandic Commonwealth,950,1
+Icelandic Commonwealth,1000,1
+Icelandic Commonwealth,1050,1
+Icelandic Commonwealth,1100,1
+Icelandic Commonwealth,1150,2
+Icelandic Commonwealth,1200,2
+Icelandic Commonwealth,1250,2
+Ilkhanate,1300,1
+Inca Empire,1450,1
+Inca Empire,1500,1
+Inca Empire,1550,1
+Iraqi Republic,2000,2
+Islamic Republic of Pakistan,1950,11
+Islamic Republic of Pakistan,2000,11
+Islamic Republic of Pakistan,2015,11
+Italian Africa,1900,3
+Jamaica,2000,8
+Jamaica,2015,8
+Japan,2000,44
+Japan,2015,44
+Joseon,1400,1
+Joseon,1450,1
+Joseon,1500,1
+Joseon,1550,1
+Joseon,1600,1
+Joseon,1650,1
+Joseon,1700,1
+Joseon,1750,1
+Joseon,1800,1
+Joseon,1850,7
+Judea,-100,3
+Judea,-50,5
+Judea,0,13
+Kalmar Union,1450,5
+Kalmar Union,1500,6
+Kamakura Shogunate,1300,1
+Kara-Khitans,1200,1
+Kazakh Khanate,1800,1
+Khmer Empire,1100,1
+Khmer Empire,1150,1
+Khmer Empire,1200,1
+Khmer Empire,1250,1
+Khmer Empire,1300,1
+Khmer Empire,1350,1
+Khmer Empire,1400,1
+Khmer Empire,1450,1
+Khmer Empire,1500,1
+Khmer Empire,1550,1
+Khmer Empire,1600,1
+Khmer Empire,1650,1
+Khmer Empire,1700,1
+Khmer Empire,1750,1
+Khmer Empire,1800,1
+Khmer Empire,1850,1
+Kievan Rus',900,1
+Kievan Rus',950,2
+Kievan Rus',1000,2
+Kievan Rus',1050,2
+Kievan Rus',1100,2
+Kievan Rus',1150,2
+Kievan Rus',1200,3
+Kingdom of Afghanistan,1950,5
+Kingdom of Alba,1000,3
+Kingdom of Alba,1050,5
+Kingdom of Alba,1100,5
+Kingdom of Alba,1150,6
+Kingdom of Alba,1200,7
+Kingdom of Alba,1250,9
+Kingdom of Aragon,1150,1
+Kingdom of Arles,950,1
+Kingdom of Arles,1000,2
+Kingdom of Arles,1050,3
+Kingdom of Arles,1100,3
+Kingdom of Arles,1150,3
+Kingdom of Arles,1200,3
+Kingdom of Arles,1250,3
+Kingdom of Arles,1300,3
+Kingdom of Arles,1350,4
+Kingdom of Asturias,800,1
+Kingdom of Asturias,850,1
+Kingdom of Asturias,900,1
+Kingdom of Bavaria,1850,13
+Kingdom of Belgium,1850,19
+Kingdom of Belgium,1900,37
+Kingdom of Belgium,1950,69
+Kingdom of Belgium,2000,69
+Kingdom of Belgium,2015,69
+Kingdom of Bhutan,1900,1
+Kingdom of Bhutan,1950,2
+Kingdom of Bhutan,2000,2
+Kingdom of Bhutan,2015,2
+Kingdom of Bohemia,1250,3
+Kingdom of Bohemia,1300,5
+Kingdom of Bohemia,1350,7
+Kingdom of Bohemia,1400,7
+Kingdom of Bohemia,1450,7
+Kingdom of Bohemia,1500,7
+Kingdom of Cappadocia,0,1
+Kingdom of Castile,1100,2
+Kingdom of Castile,1150,4
+Kingdom of Castile,1200,5
+Kingdom of Denmark,1350,1
+Kingdom of Denmark,1400,1
+Kingdom of Duklja,1100,1
+Kingdom of Egypt,1950,17
+Kingdom of England,950,6
+Kingdom of England,1000,8
+Kingdom of England,1050,9
+Kingdom of England,1250,13
+Kingdom of England,1300,18
+Kingdom of England,1350,22
+Kingdom of England,1400,26
+Kingdom of England,1450,39
+Kingdom of England,1500,54
+Kingdom of England,1550,68
+Kingdom of England,1600,85
+Kingdom of England,1650,102
+Kingdom of England,1700,106
+Kingdom of France,1000,1
+Kingdom of France,1050,2
+Kingdom of France,1100,3
+Kingdom of France,1150,5
+Kingdom of France,1200,9
+Kingdom of France,1250,18
+Kingdom of France,1300,24
+Kingdom of France,1350,26
+Kingdom of France,1400,31
+Kingdom of France,1450,39
+Kingdom of France,1500,50
+Kingdom of France,1550,61
+Kingdom of France,1600,89
+Kingdom of France,1650,107
+Kingdom of France,1700,145
+Kingdom of France,1750,215
+Kingdom of Georgia,1050,1
+Kingdom of Georgia,1100,1
+Kingdom of Georgia,1150,3
+Kingdom of Georgia,1200,3
+Kingdom of Georgia,1350,3
+Kingdom of Georgia,1400,3
+Kingdom of Georgia,1450,3
+Kingdom of Georgia,1500,3
+Kingdom of Georgia,1550,3
+Kingdom of Georgia,1750,3
+Kingdom of Georgia,1800,3
+Kingdom of Germany,950,2
+Kingdom of Great Britain,1750,88
+Kingdom of Great Britain,1800,171
+Kingdom of Great Britain,1850,296
+Kingdom of Great Britain,1900,609
+Kingdom of Great Britain,1950,992
+Kingdom of Great Britain,2000,992
+Kingdom of Great Britain,2015,992
+Kingdom of Greece,1950,3
+Kingdom of Gwynedd,1250,1
+Kingdom of Hanover,1850,9
+Kingdom of Hawaï'i,1800,1
+Kingdom of Hawaï'i,1850,2
+Kingdom of Hungary,1050,2
+Kingdom of Hungary,1100,4
+Kingdom of Hungary,1150,6
+Kingdom of Hungary,1200,8
+Kingdom of Hungary,1250,8
+Kingdom of Hungary,1300,9
+Kingdom of Hungary,1350,10
+Kingdom of Hungary,1400,14
+Kingdom of Hungary,1500,17
+Kingdom of Iraq,1950,6
+Kingdom of Israel,-1000,2
+Kingdom of Israel,-950,2
+Kingdom of Israel,-900,3
+Kingdom of Israel,-850,4
+Kingdom of Israel,-800,4
+Kingdom of Israel,-750,4
+Kingdom of Italy,700,1
+Kingdom of Italy,750,1
+Kingdom of Italy,950,4
+Kingdom of Italy,1900,123
+Kingdom of Jerusalem,1100,1
+Kingdom of Jerusalem,1150,1
+Kingdom of Jerusalem,1200,1
+Kingdom of Jerusalem,1250,1
+Kingdom of Jordan,1950,3
+Kingdom of Jordan,2000,3
+Kingdom of Jordan,2015,3
+Kingdom of Judah,-900,1
+Kingdom of Judah,-850,1
+Kingdom of Judah,-800,2
+Kingdom of Judah,-750,3
+Kingdom of León,1000,1
+Kingdom of León,1200,3
+Kingdom of Mysore,1750,1
+Kingdom of Naples,1300,1
+Kingdom of Naples,1350,1
+Kingdom of Naples,1400,1
+Kingdom of Naples,1500,2
+Kingdom of Northumbria,650,1
+Kingdom of Northumbria,700,2
+Kingdom of Northumbria,750,2
+Kingdom of Northumbria,800,3
+Kingdom of Northumbria,850,3
+Kingdom of Northumbria,900,3
+Kingdom of Norway,1950,26
+Kingdom of Norway,2000,26
+Kingdom of Norway,2015,26
+Kingdom of Pergamon,-200,1
+Kingdom of Pergamon,-150,1
+Kingdom of Poland,1000,2
+Kingdom of Poland,1050,3
+Kingdom of Poland,1100,3
+Kingdom of Poland,1350,4
+Kingdom of Poland,1400,6
+Kingdom of Pontus,-100,1
+Kingdom of Pontus,-50,1
+Kingdom of Pontus,0,1
+Kingdom of Pontus,50,1
+Kingdom of Portugal,1150,3
+Kingdom of Portugal,1200,6
+Kingdom of Portugal,1250,8
+Kingdom of Portugal,1300,10
+Kingdom of Portugal,1350,13
+Kingdom of Portugal,1400,14
+Kingdom of Portugal,1450,18
+Kingdom of Portugal,1500,22
+Kingdom of Portugal,1550,22
+Kingdom of Portugal,1650,22
+Kingdom of Portugal,1700,24
+Kingdom of Portugal,1750,26
+Kingdom of Portugal,1800,28
+Kingdom of Portugal,1850,32
+Kingdom of Portugal,1900,34
+Kingdom of Prussia,1750,30
+Kingdom of Prussia,1800,34
+Kingdom of Sardinia,1750,9
+Kingdom of Sardinia,1800,17
+Kingdom of Sardinia,1850,20
+Kingdom of Saudi Arabia,1950,2
+Kingdom of Saudi Arabia,2000,2
+Kingdom of Saudi Arabia,2015,2
+Kingdom of Scotland,1300,3
+Kingdom of Scotland,1350,4
+Kingdom of Scotland,1400,5
+Kingdom of Scotland,1450,7
+Kingdom of Scotland,1500,10
+Kingdom of Scotland,1550,12
+Kingdom of Scotland,1600,13
+Kingdom of Sicily,1200,4
+Kingdom of Sicily,1250,4
+Kingdom of Sicily,1350,4
+Kingdom of Spain,1550,23
+Kingdom of Spain,1650,27
+Kingdom of Spain,1700,33
+Kingdom of Spain,1750,35
+Kingdom of Spain,1800,40
+Kingdom of Spain,1850,66
+Kingdom of Spain,1900,76
+Kingdom of Spain,2000,143
+Kingdom of Spain,2015,143
+Kingdom of Sweden,1100,1
+Kingdom of Sweden,1150,1
+Kingdom of Sweden,1200,1
+Kingdom of Sweden,1250,1
+Kingdom of Sweden,1300,2
+Kingdom of Sweden,1350,2
+Kingdom of Sweden,1400,2
+Kingdom of Sweden,1550,8
+Kingdom of Sweden,1600,8
+Kingdom of Sweden,1950,82
+Kingdom of Sweden,2000,82
+Kingdom of Sweden,2015,82
+Kingdom of Syrmia,1300,1
+Kingdom of Thailand,1950,3
+Kingdom of Thailand,2000,3
+Kingdom of Thailand,2015,3
+Kingdom of Wessex,850,5
+Kingdom of Wessex,900,8
+Kingdom of Württemberg,1850,6
+Kingdom of the Franks,500,2
+Kingdom of the Franks,550,2
+Kingdom of the Franks,600,2
+Kingdom of the Franks,650,3
+Kingdom of the Franks,700,3
+Kingdom of the Franks,750,7
+Kingdom of the Franks,800,10
+Kingdom of the Two Sicilies,1850,1
+Korean Empire,1900,1
+Lebanon,1950,7
+Lebanon,2000,7
+Lebanon,2015,7
+Libyan Arab Republic,2000,1
+Lodi Dynasty,1500,1
+Luxembourg,1900,4
+Luxembourg,1950,8
+Luxembourg,2000,8
+Luxembourg,2015,8
+Lydia,-650,1
+Lydia,-600,1
+Lydia,-550,1
+Macedonian Empire,-400,2
+Macedonian Empire,-350,2
+Macedonian Empire,-325,2
+Macedonian Empire,-320,4
+Macedonian Empire,-300,4
+Madagascar,2000,1
+Madagascar,2015,1
+Malaysia,2000,1
+Malaysia,2015,1
+Mali Empire,1250,1
+Mali Empire,1300,1
+Mali Empire,1350,1
+Mali Empire,1400,1
+Mali Empire,1450,1
+Mali Empire,1500,1
+Mali Empire,1550,1
+Mali Empire,1600,1
+Mali Federation,2000,2
+Mali Federation,2015,2
+Mamluk Dynasty,1250,1
+Median Kingdom,-600,3
+Mexico,1900,16
+Mexico,1950,43
+Mexico,2000,43
+Mexico,2015,43
+Middle Kingdom of Egypt,-2000,1
+Middle Kingdom of Egypt,-1750,1
+Ming Dynasty,1550,1
+Ming Dynasty,1600,2
+Mongol Empire,1250,6
+Mongolian People's Republic,1950,2
+Montenegro,1900,2
+Montenegro,2015,2
+Morocco,1900,1
+Morocco,2000,3
+Morocco,2015,3
+Mughal Empire,1550,3
+Mughal Empire,1600,4
+Mughal Empire,1650,4
+Mughal Empire,1700,4
+Mughal Empire,1750,6
+Mughal Empire,1800,7
+Mughal Empire,1850,7
+Muhammad Ali dynasty,1850,4
+Neo-Assyrian Empire,-650,3
+Nepal,1900,2
+Nepal,1950,3
+Nepal,2000,3
+Nepal,2015,3
+Netherlands,1850,28
+Netherlands,1900,58
+Netherlands,1950,129
+Netherlands,2000,129
+Netherlands,2015,129
+Netherlands Antilles,1900,2
+Netherlands Antilles,1950,6
+Netherlands Antilles,2000,6
+Netherlands Antilles,2015,6
+New France,1750,2
+New Kingdom of Egypt,-1500,5
+New Kingdom of Egypt,-1250,5
+New Kingdom of Egypt,-1000,5
+New Kingdom of Egypt,-950,5
+New Kingdom of Egypt,-900,5
+New Kingdom of Egypt,-850,5
+New Zealand,1950,7
+New Zealand,2000,7
+New Zealand,2015,7
+Nicaean Empire,1250,3
+Norman England,1100,5
+Norman England,1150,8
+Norman Italy,1050,1
+Norman Italy,1100,2
+North Yemen,1950,1
+Old Kingdom of Norway,950,3
+Old Kingdom of Norway,1000,4
+Old Kingdom of Norway,1100,4
+Old Kingdom of Norway,1150,4
+Old Kingdom of Norway,1200,4
+Old Kingdom of Norway,1250,4
+Old Kingdom of Norway,1300,4
+Old Kingdom of Norway,1350,4
+Old Kingdom of Norway,1400,4
+Oriental Republic of Uruguay,1850,1
+Oriental Republic of Uruguay,1900,7
+Oriental Republic of Uruguay,1950,20
+Oriental Republic of Uruguay,2000,20
+Oriental Republic of Uruguay,2015,20
+Ostrogothic Kingdom,500,5
+Ostrogothic Kingdom,550,8
+Ottoman Empire,1350,1
+Ottoman Empire,1400,4
+Ottoman Empire,1450,8
+Ottoman Empire,1500,9
+Ottoman Empire,1550,12
+Ottoman Empire,1600,13
+Ottoman Empire,1650,18
+Ottoman Empire,1700,19
+Ottoman Empire,1750,21
+Ottoman Empire,1800,21
+Ottoman Empire,1850,33
+Ottoman Empire,1900,45
+Pahlavi Dynasty,1950,16
+Pandya Dynasty,750,1
+Pandya Dynasty,800,1
+Pandya Dynasty,850,1
+Pandya Dynasty,900,1
+Papal States,800,15
+Papal States,850,24
+Papal States,900,36
+Papal States,950,40
+Papal States,1000,43
+Papal States,1050,44
+Papal States,1100,49
+Papal States,1150,51
+Papal States,1200,56
+Papal States,1250,56
+Papal States,1300,56
+Papal States,1350,58
+Papal States,1400,62
+Papal States,1450,71
+Papal States,1500,80
+Papal States,1550,92
+Papal States,1600,95
+Papal States,1650,99
+Papal States,1700,105
+Papal States,1750,110
+Papal States,1800,112
+Papal States,1850,113
+Paraguay,1850,1
+Paraguay,1900,3
+Paraguay,1950,10
+Paraguay,2000,10
+Paraguay,2015,10
+Parthian Empire,200,2
+Peloponnesian League,-550,2
+Peloponnesian League,-500,2
+Peloponnesian League,-450,3
+Peloponnesian League,-400,5
+Peloponnesian League,-350,5
+People's Republic of Angola,2000,1
+People's Republic of Angola,2015,1
+People's Republic of Bulgaria,1950,13
+People's Republic of China,1950,17
+People's Republic of China,2000,17
+People's Republic of China,2015,17
+People's Socialist Republic of Albania,1950,3
+Philistia,-1000,2
+Philistia,-950,2
+Philistia,-900,2
+Philistia,-850,2
+Philistia,-800,2
+Philistia,-750,2
+Polish-Lithuanian Commonwealth,1600,4
+Polish-Lithuanian Commonwealth,1650,7
+Polish-Lithuanian Commonwealth,1700,11
+Polish-Lithuanian Commonwealth,1750,14
+Portugal,2000,23
+Portugal,2015,23
+Portuguese Empire,1800,1
+Principality of Bulgaria,1900,7
+Principality of Hohenzollern-Sigmaringen,1850,1
+Principality of Hungary,950,1
+Principality of Moldavia,1400,1
+Principality of Moldavia,1450,1
+Principality of Moldavia,1500,1
+Principality of Moldavia,1550,1
+Principality of Moldavia,1600,1
+Principality of Moldavia,1650,1
+Principality of Moldavia,1700,1
+Principality of Moldavia,1750,1
+Principality of Moldavia,1800,2
+Principality of Rostov-Suzdal,1200,1
+Ptolemaic Kingdom,-300,5
+Ptolemaic Kingdom,-250,6
+Ptolemaic Kingdom,-200,6
+Ptolemaic Kingdom,-150,6
+Ptolemaic Kingdom,-100,7
+Ptolemaic Kingdom,-50,8
+Qajar Dynasty,1800,4
+Qajar Dynasty,1850,6
+Qajar Dynasty,1900,9
+Qara Qoyunlu,1400,1
+Qara Qoyunlu,1450,1
+Qing Dynasty,1650,1
+Qing Dynasty,1700,3
+Qing Dynasty,1750,3
+Qing Dynasty,1800,4
+Qing Dynasty,1850,12
+Qing Dynasty,1900,16
+Rashidun Caliphate,650,4
+Rattanakosin Kingdom,1850,1
+Rattanakosin Kingdom,1900,1
+Regency of Algiers,1800,1
+Republic of Azerbaijan,2000,1
+Republic of Azerbaijan,2015,1
+Republic of Baden,1850,1
+Republic of Benin,2000,1
+Republic of Benin,2015,1
+Republic of Brazil,2000,10
+Republic of Brazil,2015,10
+Republic of Burundi,2000,1
+Republic of Burundi,2015,1
+Republic of Cabo Verde,2000,3
+Republic of Cabo Verde,2015,3
+Republic of Cameroon,2000,7
+Republic of Cameroon,2015,7
+Republic of Chile,1850,2
+Republic of Chile,1900,14
+Republic of Chile,1950,28
+Republic of Chile,2000,28
+Republic of Chile,2015,28
+Republic of China,1950,12
+Republic of China,2000,12
+Republic of China,2015,12
+Republic of Colombia,1900,3
+Republic of Colombia,1950,16
+Republic of Colombia,2000,16
+Republic of Colombia,2015,16
+Republic of Costa Rica,1900,2
+Republic of Costa Rica,1950,4
+Republic of Costa Rica,2000,4
+Republic of Costa Rica,2015,4
+Republic of Cuba,1950,8
+Republic of Cyprus,2000,1
+Republic of Cyprus,2015,1
+Republic of Côte d'Ivoire,2000,11
+Republic of Côte d'Ivoire,2015,11
+Republic of Ecuador,1900,1
+Republic of Ecuador,1950,3
+Republic of Ecuador,2000,3
+Republic of Ecuador,2015,3
+Republic of El Salvador,1900,1
+Republic of El Salvador,1950,3
+Republic of El Salvador,2000,3
+Republic of El Salvador,2015,3
+Republic of Finland,1950,32
+Republic of Finland,2000,32
+Republic of Finland,2015,32
+Republic of Florence,1300,4
+Republic of Florence,1350,11
+Republic of Florence,1400,20
+Republic of Florence,1450,35
+Republic of Florence,1500,44
+Republic of Florence,1550,49
+Republic of Florence,1600,52
+Republic of Florence,1650,53
+Republic of Florence,1700,53
+Republic of Genoa,1450,1
+Republic of Genoa,1500,1
+Republic of Genoa,1550,1
+Republic of Genoa,1600,1
+Republic of Genoa,1650,1
+Republic of Genoa,1700,3
+Republic of Genoa,1750,9
+Republic of Haiti,1950,5
+Republic of Haiti,2000,5
+Republic of Haiti,2015,5
+Republic of Iceland,1950,7
+Republic of Iceland,2000,7
+Republic of Iceland,2015,7
+Republic of India,1950,29
+Republic of India,2000,29
+Republic of India,2015,29
+Republic of Indonesia,1950,2
+Republic of Indonesia,2000,2
+Republic of Indonesia,2015,2
+Republic of Italy,1950,113
+Republic of Italy,2000,113
+Republic of Italy,2015,113
+Republic of Kenya,2000,2
+Republic of Kenya,2015,2
+Republic of Korea,1950,13
+Republic of Korea,2000,13
+Republic of Korea,2015,13
+Republic of Latvia,2000,3
+Republic of Latvia,2015,3
+Republic of Liberia,1900,1
+Republic of Liberia,1950,1
+Republic of Liberia,2000,1
+Republic of Liberia,2015,1
+Republic of Lithuania,2000,1
+Republic of Lithuania,2015,1
+Republic of Nicaragua,1850,2
+Republic of Nicaragua,1900,5
+Republic of Nicaragua,1950,5
+Republic of Nicaragua,2000,5
+Republic of Nicaragua,2015,5
+Republic of Panama,1950,5
+Republic of Panama,2000,5
+Republic of Panama,2015,5
+Republic of Peru,1900,11
+Republic of Peru,1950,16
+Republic of Peru,2000,16
+Republic of Peru,2015,16
+Republic of Pisa,1050,1
+Republic of Pisa,1100,2
+Republic of Pisa,1150,3
+Republic of Pisa,1200,3
+Republic of Pisa,1250,3
+Republic of Pisa,1300,3
+Republic of Pisa,1350,3
+Republic of Pisa,1400,3
+Republic of Poland,2000,23
+Republic of Poland,2015,23
+Republic of Senegal,2000,6
+Republic of Senegal,2015,6
+Republic of Singapore,2000,2
+Republic of Singapore,2015,2
+Republic of Sudan,2000,1
+Republic of Sudan,2015,1
+Republic of Suriname,2000,2
+Republic of Suriname,2015,2
+Republic of Trinidad and Tobago,2000,2
+Republic of Trinidad and Tobago,2015,2
+Republic of Tunisia,2000,1
+Republic of Tunisia,2015,1
+Republic of Turkey,1950,17
+Republic of Turkey,2000,17
+Republic of Turkey,2015,17
+Republic of Venice,1200,1
+Republic of Venice,1250,1
+Republic of Venice,1300,1
+Republic of Venice,1350,1
+Republic of Venice,1400,1
+Republic of Venice,1450,5
+Republic of Venice,1500,8
+Republic of Venice,1550,9
+Republic of Venice,1600,9
+Republic of Venice,1650,10
+Republic of Venice,1700,12
+Republic of Venice,1750,17
+Republic of Zimbabwe,2000,1
+Republic of Zimbabwe,2015,1
+Republic of the Philippines,1950,3
+Republic of the Philippines,2000,3
+Republic of the Philippines,2015,3
+Roman Empire,0,30
+Roman Empire,50,41
+Roman Empire,100,65
+Roman Empire,150,77
+Roman Empire,200,106
+Roman Empire,250,126
+Roman Empire,300,151
+Roman Empire,350,163
+Roman Republic,-300,3
+Roman Republic,-250,6
+Roman Republic,-200,9
+Roman Republic,-150,14
+Roman Republic,-100,31
+Roman Republic,-50,35
+Russian Empire,1750,18
+Russian Empire,1800,66
+Russian Empire,1850,219
+Russian Empire,1900,276
+Safavid Dynasty,1550,2
+Safavid Dynasty,1600,2
+Safavid Dynasty,1650,2
+Safavid Dynasty,1700,2
+Saint Kitts,2000,1
+Saint Kitts,2015,1
+Salian Franks,450,3
+Salian Franks,500,3
+Samanid Empire,900,2
+Samanid Empire,950,3
+Sasanian Empire,250,1
+Sasanian Empire,300,2
+Sasanian Empire,350,2
+Sasanian Empire,400,2
+Sasanian Empire,450,2
+Sasanian Empire,500,3
+Sasanian Empire,550,5
+Sasanian Empire,600,5
+Saxe-Altenburg,1850,1
+Saxe-Meiningen,1850,1
+Scandinavian minor kingdoms,850,1
+Scandinavian minor kingdoms,900,2
+Scandinavian minor kingdoms,950,2
+Scandinavian minor kingdoms,1000,2
+Second Athenian League,-350,2
+Second Republic of Austria,1950,25
+Second Republic of Austria,2000,25
+Second Republic of Austria,2015,25
+Seleucid Empire,-300,1
+Seleucid Empire,-250,2
+Seleucid Empire,-200,3
+Seleucid Empire,-150,4
+Seleucid Empire,-100,4
+Serbs,1850,3
+Serbs,1900,3
+Shirvan,1150,1
+Shirvan,1200,1
+Shirvan,1350,1
+Shirvan,1450,1
+Shirvan,1500,1
+Sikh Empire,1800,1
+Socialist Federal Republic of Yugoslavia,1950,103
+Socialist Republic of Romania,1950,16
+Sokoto Caliphate,1900,1
+South Africa,1950,24
+South Africa,2000,24
+South Africa,2015,24
+Southern Song,1050,1
+Southern Song,1100,2
+Southern Song,1150,2
+Southern Song,1200,2
+Southern Song,1250,2
+Spanish Empire,1550,3
+Spanish Empire,1600,3
+Spanish Empire,1650,4
+Spanish Empire,1700,5
+Spanish Empire,1750,15
+Spanish Empire,1800,16
+Spanish Empire,1850,21
+State of Israel,1950,10
+State of Israel,2000,10
+State of Israel,2015,10
+Sui Dynasty,600,2
+Sultanate of Kedah,1900,1
+Sultanate of Muscat and Oman,1900,1
+Sultanate of Oman,2000,1
+Sultanate of Oman,2015,1
+Sultanate of Rum,1200,2
+Sultanate of Rum,1250,2
+Swedish Empire,1650,7
+Swedish Empire,1700,13
+Swedish Empire,1750,18
+Swedish Empire,1800,21
+Swiss Confederation,1450,1
+Swiss Confederation,1500,2
+Swiss Confederation,1550,2
+Swiss Confederation,1600,2
+Swiss Confederation,1650,2
+Swiss Confederation,1700,5
+Swiss Confederation,1750,7
+Swiss Confederation,1850,28
+Swiss Confederation,1900,54
+Swiss Confederation,1950,81
+Swiss Confederation,2000,81
+Swiss Confederation,2015,81
+Taifa of Murcia,1150,1
+Taifa of Zaragoza,1050,3
+Taifa of Zaragoza,1100,3
+Tang Dynasty,650,1
+Tang Dynasty,700,2
+Tang Dynasty,750,3
+Tang Dynasty,800,3
+Tang Dynasty,850,3
+Tang Dynasty,900,3
+Teutonic Order,1400,1
+Teutonic Order,1450,1
+Teutonic Order,1500,1
+Third Hellenic Republic,2000,8
+Third Hellenic Republic,2015,8
+Tibetans,1050,1
+Tibetans,1100,1
+Tibetans,1150,1
+Tibetans,1200,1
+Tibetans,1250,1
+Timurid Empire,1400,1
+Timurid Empire,1450,2
+Timurid Empire,1500,3
+Togo,2000,2
+Togo,2015,2
+Tokugawa Shogunate,1800,8
+Tokugawa Shogunate,1850,12
+Trịnh lords,1750,1
+Tsardom of Russia,1550,6
+Tsardom of Russia,1600,7
+Tsardom of Russia,1650,11
+Tsardom of Russia,1700,14
+Umayyad Caliphate,700,9
+Umayyad Caliphate,750,9
+Union of Soviet Socialist Republics,1950,277
+United Kingdoms of Sweden and Norway,1850,39
+United Kingdoms of Sweden and Norway,1900,46
+United Principalities of Moldavia and Wallachia,1900,13
+United States of America,1800,84
+United States of America,1850,253
+United States of America,1900,1099
+United States of America,1950,2087
+United States of America,2000,2088
+United States of America,2015,2088
+Vakataka Kingdom,500,1
+Vakataka Kingdom,550,1
+Venezuela,1850,1
+Venezuela,1900,5
+Venezuela,1950,12
+Venezuela,2000,12
+Venezuela,2015,12
+Warring States Japan,1500,4
+Warring States Japan,1550,6
+Warring States Japan,1600,6
+West Franks,850,2
+West Franks,900,5
+West Franks,950,6
+Western Chalukya Empire,1100,1
+Western Chalukya Empire,1150,1
+Western Roman Empire,400,10
+Western Roman Empire,450,16
+Xu,-400,1
+Xu,-350,1
+Xu,-325,1
+Xu,-320,1
+Xu,-300,1
+Yuan Dynasty,1300,1
+Yuan Dynasty,1350,3
+Zhao,-300,1
+Zhao,-250,1
+Éire,1950,27
+Éire,2000,27
+Éire,2015,27
