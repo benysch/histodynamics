@@ -1592,7 +1592,9 @@ document.addEventListener("keydown", ev => {
     Array.prototype.forEach.call(seg.children, function (o) {
       o.classList.toggle("active", o.dataset.id === id);
     });
-    weightsBox.style.display = (window.LENS_BY_ID[id].kind === "composite") ? "block" : "none";
+    var composite = window.LENS_BY_ID[id].kind === "composite";
+    weightsBox.style.display = composite ? "block" : "none";
+    if (window.sensWrap) window.sensWrap.style.display = composite ? "" : "none";
     // Absolute width reads raw population in the renderer, so it only makes sense
     // for the population lens — disable it (and revert) under any other metric to
     // avoid showing population bars while the selector says "Territory".
@@ -1618,8 +1620,12 @@ document.addEventListener("keydown", ev => {
   }
   function updateSensitivity() {
     if (!sens || sensYear == null) return;
-    sens.update({ year: sensYear, params: current.params,
-                  focusId: leaderAt(current.params, sensYear) });
+    // Repaint the triangle only when the composite panel is on-screen; always
+    // refresh the on-chart band (it self-clears off the power lens).
+    if (current.lensId === "power") {
+      sens.update({ year: sensYear, params: current.params,
+                    focusId: leaderAt(current.params, sensYear) });
+    }
     if (typeof window.refreshRobustBand === "function") window.refreshRobustBand();
   }
   // Subject of the robustness ribbon, read by the renderer (script #1): the
@@ -1643,7 +1649,16 @@ document.addEventListener("keydown", ev => {
       try { return (typeof color === "function" && color(id)) || fb || "#888"; }
       catch (e) { return fb || "#888"; }
     };
-    var sidebar = document.getElementById("sidebar");
+    // Mount the sensitivity panel right after "Measure by" (not at the sidebar's
+    // foot, below Palette/Export) so it sits with the lens controls it explains.
+    // It's about defining power, so show it only on the composite lens — like the
+    // weight sliders — instead of a stray ternary on the Population view.
+    var sensWrap = document.createElement("div");
+    sensWrap.style.display = "none";
+    var anchor = document.getElementById("sb-lens-sec");
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(sensWrap, anchor.nextSibling);
+    else document.getElementById("sidebar").appendChild(sensWrap);
+    window.sensWrap = sensWrap;
     // year control (the phase diagram is per-slice)
     var ysec = document.createElement("div"); ysec.className = "sb-sec";
     var ylab = document.createElement("div"); ylab.className = "sb-label";
@@ -1657,10 +1672,10 @@ document.addEventListener("keydown", ev => {
       ylab.textContent = "Sensitivity year — " + fmtYear(sensYear);
       updateSensitivity();
     });
-    ysec.appendChild(ylab); ysec.appendChild(yinp); sidebar.appendChild(ysec);
+    ysec.appendChild(ylab); ysec.appendChild(yinp); sensWrap.appendChild(ysec);
 
     sens = window.mountSensitivity({
-      container: sidebar, lensId: "power", onWeights: adoptWeights
+      container: sensWrap, lensId: "power", onWeights: adoptWeights
     });
     updateSensitivity();
   }
