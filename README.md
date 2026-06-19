@@ -40,7 +40,7 @@ palettes, annotations, export — is derived from data, in the Demograph spirit.
 | **Territory share** | share of mapped land area | free from polygon area at rasterization |
 | **Economic share** | share of world GDP (Maddison) | low confidence before ~1500; degrades toward population there |
 | **Relative power** | weighted blend of population/territory/economy, **your weights** | presets: Demographic · Balanced · Sparks-led · Economic |
-| **Structural complexity** † | share of world urban population | urbanization as a proxy for institutional maturity (Clio Infra, **1500+ only**) |
+| **Structural complexity** † | share of world urban population | urban population as a proxy for institutional maturity, from city-level data (Reba et al., **3700 BC – AD 2000**) |
 | **Cultural centrality** † | share of globally-translated historical figures born here | soft power by cross-border reach, not taste (MIT Pantheon) |
 
 † **Data-gated.** These two lenses ship in `lenses.js` and light up automatically

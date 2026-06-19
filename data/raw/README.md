@@ -13,19 +13,23 @@ them here, then run the pipeline. Nothing in the repo fetches them automatically
 
 ## For the new data-gated lenses
 
-**Structural complexity** — `clio_infra_urbanization.csv`
-- Source: [Clio Infra](https://clio-infra.eu/) Urbanization Ratio
-  ([IISG Dataverse `hdl:10622/LZ0Y36`](https://datasets.iisg.amsterdam/dataset.xhtml?persistentId=hdl:10622/LZ0Y36),
-  `Urbanization_ratio-historical.xlsx`).
-- Columns required: `country_iso, year, urban_pct`.
-- Build it from the raw workbook: `python pipeline/build_clio_urbanization.py`
-  (reshapes wide→long, maps ISO-numeric→ISO-A3 via Natural Earth, interpolates to
-  slice years).
-- Then: `python pipeline/compute_complexity.py` → `data/processed/vectors/urban_pop.csv`.
-- **Coverage: 1500–2015 only.** Clio's series runs 1500–2000 (the 2015 slice holds
-  the 2000 value forward); there is no source for pre-1500 urbanization here, so the
-  lens is blank before 1500 — it is a modern-era metric by construction. (A global
-  pre-1500 fill would need city-level data such as Reba et al. 2016.)
+**Structural complexity** — city-level urban population (all eras)
+- Source: Reba, Reitsma & Seto (2016), *Spatializing 6,000 years of global
+  urbanization* — three wide CSVs on figshare
+  ([Chandler `10.6084/m9.figshare.2059494`](https://doi.org/10.6084/m9.figshare.2059494),
+  Modelski Ancient `…2059497`, Modelski Modern `…2059500`). Stage them as
+  `reba_chandler.csv`, `reba_modelski_ancient.csv`, `reba_modelski_modern.csv`.
+  Also needs `cliopatria_polities_only.geojson` (above).
+- Then: `python pipeline/compute_urban_cities.py` → `data/processed/vectors/urban_pop.csv`.
+  Cities are interpolated onto the slice years and spatially joined to the polity
+  active at each slice — **coverage 3700 BC – AD 2000** (the 2015 slice carries the
+  2000 value forward for still-living cities), so the lens is populated across the
+  whole histomap.
+- *Modern-only alternative:* [Clio Infra](https://clio-infra.eu/) Urbanization Ratio
+  ([IISG `hdl:10622/LZ0Y36`](https://datasets.iisg.amsterdam/dataset.xhtml?persistentId=hdl:10622/LZ0Y36))
+  via `build_clio_urbanization.py` + `compute_complexity.py` — country urbanization×
+  population, but **1500+ only**. Superseded by the city data above; kept for
+  comparison.
 
 **Cultural centrality** — `pantheon_1.csv`
 - Source: [MIT Pantheon 1.0](https://www.kaggle.com/datasets/mit/pantheon-project)
