@@ -27,7 +27,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_JS = ROOT / "web" / "data.js"
+WEB = ROOT / "web"
+DATA_JS = WEB / "data.js"
 ALIASES_OUT = ROOT / "data" / "processed" / "polity_aliases.json"
 
 # canonical stream  <-  duplicate names to fold in (all share its Wikidata id)
@@ -41,6 +42,44 @@ MERGE = {
 def load():
     txt = DATA_JS.read_text(encoding="utf-8").strip()
     return json.loads(txt.replace("const HISTOMAP_DATA = ", "", 1).rstrip(";\n").rstrip(";"))
+
+
+def apply_to_web_files(aliases):
+    """Keep the other vendored web data in sync with the merge, so the visual
+    map stays consistent with the streams. Idempotent."""
+    # minimap.js (year frames) + events.js (anchors) + gdp_meta.js (est_frac per
+    # polity-year): rename the alias to the canonical — the alias's entries were in
+    # disjoint years, so they now attach to the merged stream rather than dangling.
+    for fn in ("minimap.js", "events.js", "gdp_meta.js"):
+        p = WEB / fn
+        txt = p.read_text(encoding="utf-8")
+        for old, new in aliases.items():
+            txt = txt.replace(f'"{old}"', f'"{new}"')
+        p.write_text(txt, encoding="utf-8")
+        print(f"  synced {fn} (alias -> canonical)")
+
+    # regions.js (REGION_FOCUS): names are object KEYS and the canonical already
+    # exists, so renaming would collide — drop the alias keys instead (the
+    # canonical keeps its own home/family/region-grid entry).
+    p = WEB / "regions.js"
+    prefix = "const REGION_FOCUS = "
+    obj = json.loads(p.read_text(encoding="utf-8").strip()[len(prefix):].rstrip(";\n").rstrip(";"))
+    drop = set(aliases)
+
+    def prune(x):
+        if isinstance(x, dict):
+            for k in list(x):
+                if k in drop:
+                    del x[k]
+                else:
+                    prune(x[k])
+        elif isinstance(x, list):
+            for it in x:
+                prune(it)
+
+    prune(obj)
+    p.write_text(prefix + json.dumps(obj) + ";\n", encoding="utf-8")
+    print("  synced regions.js (dropped alias keys)")
 
 
 def main():
@@ -78,6 +117,9 @@ def main():
     aliases = {a: canon for canon, al in MERGE.items() for a in al}
     ALIASES_OUT.write_text(json.dumps(aliases, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"wrote {ALIASES_OUT.relative_to(ROOT)} ({len(aliases)} aliases)")
+
+    print("syncing other web data files with the merge:")
+    apply_to_web_files(aliases)
 
 
 if __name__ == "__main__":

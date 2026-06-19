@@ -566,6 +566,19 @@ const gridG = svg.append("g");
 const TICKS_LINEAR = years.filter(y => y % 500 === 0 || y === years[0]);
 const TICKS_LOG = [-2000, -1000, -500, 0, 500, 1000, 1500, 1800, 1900, 1950, 2000, 2015]
   .filter(y => years.includes(y));
+// Right-edge total behind "100%": follows the active lens so the axis never
+// labels population while the streams show territory/economy/etc. Composite
+// (relative power) has no single unit, so it shows nothing there.
+const METRIC_UNIT = { area: " km²", gdp: " int$" };
+function metricWorld(i) {
+  const L = (window.ACTIVE_LENS && window.LENS_BY_ID) ? window.LENS_BY_ID[window.ACTIVE_LENS.id] : null;
+  if (L && L.kind === "composite") return "";
+  if (!L || !L.totalKey) return fmtWorld(worldAt(i));
+  const T = window.TOTALS && window.TOTALS[String(years[i])];
+  const v = T ? T[L.totalKey] : null;
+  return v == null ? "" : fmtWorld(v) + (METRIC_UNIT[L.id] || "");
+}
+
 function drawFurniture() {
   const ticks = timeMode === "log" ? TICKS_LOG : TICKS_LINEAR;
   gridG.selectAll(".year-line").data(ticks).join("line")
@@ -577,7 +590,7 @@ function drawFurniture() {
   gridG.selectAll(".pop-tick").data(ticks).join("text")
     .attr("class", "year-tick pop-tick").attr("x", W - M.right + 8)
     .attr("y", d => yScale(d) + 3)
-    .text(d => fmtWorld(worldAt(years.indexOf(d))));
+    .text(d => metricWorld(years.indexOf(d)));
   eraG.selectAll("*").remove();
   for (const [name, a, b] of ERA_BANDS) {
     eraG.append("text").attr("class", "era-label")
@@ -1496,6 +1509,7 @@ document.addEventListener("keydown", ev => {
     if (rA) series.residual.forEach(function (v, i) {
       if (rA[i]) rA[i].share = composite ? 0 : v;
     });
+    if (typeof drawFurniture === "function") drawFurniture();   // refresh the lens-aware right-edge total
     if (typeof render === "function") render(!!animate);
     if (sens) updateSensitivity();
   }
@@ -1559,6 +1573,17 @@ document.addEventListener("keydown", ev => {
       o.classList.toggle("active", o.dataset.id === id);
     });
     weightsBox.style.display = (window.LENS_BY_ID[id].kind === "composite") ? "block" : "none";
+    // Absolute width reads raw population in the renderer, so it only makes sense
+    // for the population lens — disable it (and revert) under any other metric to
+    // avoid showing population bars while the selector says "Territory".
+    var absBtn = document.getElementById("mode-abs");
+    if (absBtn) {
+      var popLens = (id === "pop");
+      absBtn.style.opacity = popLens ? "" : ".4";
+      absBtn.style.pointerEvents = popLens ? "" : "none";
+      absBtn.title = popLens ? "" : "Absolute width is defined for population only";
+      if (!popLens && typeof mode !== "undefined" && mode === "abs" && typeof setMode === "function") setMode("share");
+    }
     note.textContent = window.LENS_BY_ID[id].description || "";
     scheduleRebuild(true);
   }
