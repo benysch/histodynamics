@@ -189,9 +189,19 @@ def main():
                              "first": int(gsub[gsub.Name == name].FromYear.min()),
                              "last": int(gsub[gsub.Name == name].ToYear.max())}
 
+    # curated duplicate-stream merges (pipeline/merge_polities.py): route an alias
+    # Cliopatria name to the canonical stream its population was folded into.
+    aliases = {}
+    apath = ROOT / "data" / "processed" / "polity_aliases.json"
+    if apath.exists():
+        aliases = json.loads(apath.read_text(encoding="utf-8"))
+
     # --- map every Cliopatria polity name -> stream ---
     name_to_stream = {}
     for name in clio.Name.unique():
+        if name in aliases and aliases[name] in kept:
+            name_to_stream[name] = aliases[name]  # merged duplicate -> canonical
+            continue
         if name in kept:
             name_to_stream[name] = name           # prominent: identity
             continue
