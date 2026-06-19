@@ -521,7 +521,7 @@ for (const [child, lin] of Object.entries(D.lineage || {})) {
   const g = defs.append("linearGradient")
     .attr("id", id).attr("gradientUnits", "userSpaceOnUse")
     .attr("x1", 0).attr("x2", 0)
-    .attr("y1", yScale(first.year)).attr("y2", yScale(first.year + GRAD_SPAN));
+    .attr("y1", yScale(first.year)).attr("y2", yScale(Math.min(first.year + GRAD_SPAN, yearMax)));
   g.append("stop").attr("offset", "0%");
   g.append("stop").attr("offset", "100%");
   lineageDefs.push({ id, child, parent: lin.parent, family: lin.family });
@@ -613,7 +613,7 @@ function drawFurniture() {
   for (const ld of lineageDefs) {  // gradient geometry follows the y axis
     const first = D.series[ld.child].find(d => d.share > 0);
     if (first) defs.select("#" + ld.id)
-      .attr("y1", yScale(first.year)).attr("y2", yScale(first.year + GRAD_SPAN));
+      .attr("y1", yScale(first.year)).attr("y2", yScale(Math.min(first.year + GRAD_SPAN, yearMax)));
   }
 }
 drawFurniture();
