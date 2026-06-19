@@ -14,9 +14,18 @@ them here, then run the pipeline. Nothing in the repo fetches them automatically
 ## For the new data-gated lenses
 
 **Structural complexity** — `clio_infra_urbanization.csv`
-- Source: [Clio Infra](https://clio-infra.eu/) urbanization ratio.
+- Source: [Clio Infra](https://clio-infra.eu/) Urbanization Ratio
+  ([IISG Dataverse `hdl:10622/LZ0Y36`](https://datasets.iisg.amsterdam/dataset.xhtml?persistentId=hdl:10622/LZ0Y36),
+  `Urbanization_ratio-historical.xlsx`).
 - Columns required: `country_iso, year, urban_pct`.
+- Build it from the raw workbook: `python pipeline/build_clio_urbanization.py`
+  (reshapes wide→long, maps ISO-numeric→ISO-A3 via Natural Earth, interpolates to
+  slice years).
 - Then: `python pipeline/compute_complexity.py` → `data/processed/vectors/urban_pop.csv`.
+- **Coverage: 1500–2015 only.** Clio's series runs 1500–2000 (the 2015 slice holds
+  the 2000 value forward); there is no source for pre-1500 urbanization here, so the
+  lens is blank before 1500 — it is a modern-era metric by construction. (A global
+  pre-1500 fill would need city-level data such as Reba et al. 2016.)
 
 **Cultural centrality** — `pantheon_1.csv`
 - Source: [MIT Pantheon 1.0](https://www.kaggle.com/datasets/mit/pantheon-project)

@@ -53,13 +53,17 @@ def main():
         s = g.set_index("year")["r"].sort_index()
         s = s[~s.index.duplicated()]
         lo, hi = s.index.min(), s.index.max()
-        targets = [y for y in slices if lo <= y <= hi]
-        if not targets:
+        within = [y for y in slices if lo <= y <= hi]
+        if not within:
             continue
-        idx = sorted(set(s.index) | set(targets))
+        idx = sorted(set(s.index) | set(within))
         interp = s.reindex(idx).interpolate(method="index")
-        for y in targets:
-            rows.append((iso, y, round(float(interp.loc[y]) * 100.0, 3)))  # fraction -> percent
+        last = float(s.iloc[-1])
+        for y in slices:
+            if y < lo:
+                continue                        # no back-extrapolation: pre-1500 has no source
+            val = float(interp.loc[y]) if y <= hi else last  # hold latest (Clio ends ~2000) to 2015
+            rows.append((iso, y, round(val * 100.0, 3)))      # fraction -> percent
 
     out = pd.DataFrame(rows, columns=["country_iso", "year", "urban_pct"])
     out.to_csv(OUT, index=False)
