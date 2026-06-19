@@ -65,18 +65,22 @@
     if (ORDERS[lensId]) return ORDERS[lensId];              // simple lens
 
     var lens = global.LENS_BY_ID && global.LENS_BY_ID[lensId];
-    var key = null;
 
-    if (lens && lens.presets && lens.components) {          // composite (full ND)
-      var keys = lens.components.map(function (c) { return c.weightKey; });
-      key = nearestPresetND(lens.presets, keys, params || {});
-    } else {                                                // composite (legacy)
-      var presets = PRESETS && PRESETS[lensId];
-      if (!presets) return null;
+    // A simple lens with no baked order (e.g. a freshly added vector dimension)
+    // must still render: fall back to population's order — it only loses the
+    // per-lens re-stacking, never the stream set. Without this buildSeries gets
+    // an empty order and the lens draws blank/stale.
+    if (!(lens && lens.presets && lens.components)) {
+      var presets1 = PRESETS && PRESETS[lensId];
+      if (!presets1) return ORDERS.pop || null;             // not a composite -> fall back
       var wArea = (params && params.wArea != null) ? params.wArea : 0.5;
-      key = nearestPreset1D(presets, wArea);
+      var k1 = nearestPreset1D(presets1, wArea);
+      return k1 ? (ORDERS[lensId + ":" + k1] || ORDERS.pop || null) : (ORDERS.pop || null);
     }
 
-    return key ? (ORDERS[lensId + ":" + key] || null) : null;
+    // composite (full ND weight match)
+    var keys = lens.components.map(function (c) { return c.weightKey; });
+    var key = nearestPresetND(lens.presets, keys, params || {});
+    return key ? (ORDERS[lensId + ":" + key] || ORDERS.pop || null) : (ORDERS.pop || null);
   };
 })(window);

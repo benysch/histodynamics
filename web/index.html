@@ -1468,8 +1468,13 @@ document.addEventListener("keydown", ev => {
   // available once at least two of its components are (so it's a real blend —
   // here population + territory; economy joins when GDP facts land).
   function simpleHasData(lens) {
-    var mid = FACTS[String(yrs[Math.floor(yrs.length / 2)])] || {};
-    return polityKeys.some(function (k) { return mid[k] && lens.extract(mid[k]) != null; });
+    // any slice with the fact present — not just the middle year, which would
+    // wrongly disable a lens whose data is sparse there (e.g. era-limited facts).
+    for (var yi = 0; yi < yrs.length; yi++) {
+      var slice = FACTS[String(yrs[yi])] || {};
+      for (var k in slice) if (lens.extract(slice[k]) != null) return true;
+    }
+    return false;
   }
   function lensHasData(lens) {
     if (lens.kind !== "composite") return simpleHasData(lens);

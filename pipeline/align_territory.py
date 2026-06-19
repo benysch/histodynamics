@@ -368,6 +368,17 @@ def main():
     orders["gdp"]  = lens_order(streams, gdp_sh, pair)
     for label, (wp, wa, wg) in presets.items():
         orders[f"power:{label}"] = lens_order(streams, blend(wp, wa, wg), pair)
+    # vector lenses (urban, culture, …) need their own order too, else the
+    # frontend's buildSeries gets no layers and the lens renders blank/stale.
+    VECTOR_LENS = {"urban_pop": "urban", "cultural_figures": "culture"}
+    for key, lensid in VECTOR_LENS.items():
+        if key not in vectors:
+            continue
+        vw = vec_world[key]
+        sh = {s: [(vectors[key][years[i]].get(s, 0.0) / vw[years[i]]) if vw[years[i]] else 0.0
+                  for i in range(ny)] for s in streams}
+        orders[lensid] = lens_order(streams, sh, pair)
+        print(f"  per-lens order for '{lensid}' ({key})")
     emit_js("ORDERS", orders, WEB / "orders.js")
     with (WEB / "orders.js").open("a", encoding="utf-8") as f:
         f.write("window.ORDER_PRESETS = " +
