@@ -27,3 +27,9 @@ Thumbs.db
 
 # --- Vercel ---
 .vercel/
+
+# --- Local browser-verification tooling (not part of the project) ---
+node_modules/
+package.json
+package-lock.json
+.pwlibs/

@@ -151,8 +151,15 @@ python -m venv .venv
 #    ephemeral, gitignored under data/raw/):
 curl -L https://raw.githubusercontent.com/Seshat-Global-History-Databank/cliopatria/main/cliopatria.geojson.zip \
      -o data/raw/cliopatria.geojson.zip && (cd data/raw && unzip -o cliopatria.geojson.zip)
+python pipeline/merge_polities.py    # consolidate same-Wikidata duplicate streams (run once, before align)
 python pipeline/align_territory.py   # -> web/polities.js, facts.js, totals.js, orders.js
 ```
+
+Run `pipeline/merge_polities.py` **once after the foundation `data.js` exists and
+before `align_territory.py`**: it folds same-entity duplicate streams (e.g. the
+two "Brazil" republics) into one, syncs the other web data (minimap/events/
+regions/gdp_meta), and writes `data/processed/polity_aliases.json`, which
+`align_territory.py` then applies so every fact routes to the canonical stream.
 
 `align_territory.py` reproduces `export_web.py`'s raw→stream mapping (prominent
 polities by name; the rest rolled into per-family "Smaller X" bundles via the

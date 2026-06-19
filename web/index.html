@@ -551,7 +551,7 @@ function styleFor(bg) {
 
 // Static furniture (re-laid out by drawFurniture when the time axis changes).
 const fmtWorld = p => d3.format(".3s")(p).replace("G", "B");
-svg.append("text").attr("class", "year-tick")
+svg.append("text").attr("class", "year-tick").attr("id", "world-total-label")
   .attr("x", W - M.right + 8).attr("y", M.top - 10)
   .text("world pop.");
 const ERA_BANDS = [
@@ -570,13 +570,23 @@ const TICKS_LOG = [-2000, -1000, -500, 0, 500, 1000, 1500, 1800, 1900, 1950, 200
 // labels population while the streams show territory/economy/etc. Composite
 // (relative power) has no single unit, so it shows nothing there.
 const METRIC_UNIT = { area: " km²", gdp: " int$" };
+const METRIC_LABEL = { pop: "world pop.", area: "world land", gdp: "world GDP",
+                       urban: "world urban", culture: "world figures" };
+function activeLens() {
+  return (window.ACTIVE_LENS && window.LENS_BY_ID) ? window.LENS_BY_ID[window.ACTIVE_LENS.id] : null;
+}
 function metricWorld(i) {
-  const L = (window.ACTIVE_LENS && window.LENS_BY_ID) ? window.LENS_BY_ID[window.ACTIVE_LENS.id] : null;
+  const L = activeLens();
   if (L && L.kind === "composite") return "";
   if (!L || !L.totalKey) return fmtWorld(worldAt(i));
   const T = window.TOTALS && window.TOTALS[String(years[i])];
   const v = T ? T[L.totalKey] : null;
   return v == null ? "" : fmtWorld(v) + (METRIC_UNIT[L.id] || "");
+}
+function metricLabel() {            // right-axis header, kept in sync with the lens
+  const L = activeLens();
+  if (L && L.kind === "composite") return "";
+  return (L && METRIC_LABEL[L.id]) || "world pop.";
 }
 
 function drawFurniture() {
@@ -591,6 +601,7 @@ function drawFurniture() {
     .attr("class", "year-tick pop-tick").attr("x", W - M.right + 8)
     .attr("y", d => yScale(d) + 3)
     .text(d => metricWorld(years.indexOf(d)));
+  svg.select("#world-total-label").text(metricLabel());   // header in sync with lens
   eraG.selectAll("*").remove();
   for (const [name, a, b] of ERA_BANDS) {
     eraG.append("text").attr("class", "era-label")
@@ -1402,10 +1413,14 @@ document.getElementById("export-png").onclick = () => {
   img.src = url;
 };
 const sbToggle = document.getElementById("sidebar-toggle");
-sbToggle.onclick = () => {
-  const open = document.body.classList.toggle("sb-open");
-  sbToggle.innerHTML = open ? "&#10005; Close" : "&#9776; Options";
-};
+function setSidebar(open) {
+  document.body.classList.toggle("sb-open", open);
+  sbToggle.innerHTML = open ? "&#10005; Close" : "&#9776; Measure / Options";
+}
+sbToggle.onclick = () => setSidebar(!document.body.classList.contains("sb-open"));
+// Open by default on wide screens so the "Measure by" lens switcher — the whole
+// point of the project — is visible on arrival; stays a closed drawer on narrow.
+setSidebar(window.innerWidth >= 1200);
 document.addEventListener("keydown", ev => {
   if (ev.key === "Escape" && focus) setFocus(null);
 });
